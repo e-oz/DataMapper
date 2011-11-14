@@ -232,7 +232,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		if (empty($this->current_fetch_keys))
 		{
-			trigger_error("Start fetching first", E_USER_WARNING);
 			return false;
 		}
 		return $this->fetchByID(array_shift($this->current_fetch_keys));

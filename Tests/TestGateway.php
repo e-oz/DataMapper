@@ -24,6 +24,7 @@ class TestGateway extends \Jamm\Tester\ClassTest
 
 	public function testInsert()
 	{
+		if ($this->inserted) return true;
 		$data = array('key1' => 'value1', 'key2' => 'value2');
 		$id = $this->Gateway->insert($data);
 		$this->assertTrue($id);
