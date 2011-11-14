@@ -9,6 +9,7 @@ class MetaTable implements IMetaTable
 	private $primary_field;
 	private $db_name;
 	private $writable_fields;
+	private $indexed_fields;
 
 	public function __construct($table_name = '')
 	{
@@ -96,12 +97,15 @@ class MetaTable implements IMetaTable
 
 	public function getIndexedFields()
 	{
-		$fields = array();
-		foreach ($this->fields as $field)
+		if (empty($this->indexed_fields))
 		{
-			if ($field->isIndexed()) $fields[] = $field;
+			$this->indexed_fields = array();
+			foreach ($this->fields as $field)
+			{
+				if ($field->isIndexed()) $this->indexed_fields[] = $field;
+			}
 		}
-		return $fields;
+		return $this->indexed_fields;
 	}
 
 	public function getDbName()

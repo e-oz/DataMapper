@@ -14,11 +14,18 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	protected $Table;
 	protected $dbtable_key = 'db:table';
 	private $current_fetch_keys;
+	private $fetch_in_progress = false;
 
 	public function __construct(\Jamm\DataMapper\IMetaTable $MetaTable, \Jamm\Memory\RedisServer $RedisServer)
 	{
 		$this->redis = $RedisServer;
 		$this->Table = $MetaTable;
+		$table_name = $MetaTable->getName();
+		$fields = $MetaTable->getFields();
+		if (empty($table_name) || empty($fields))
+		{
+			throw new \Exception("Table is not initialized");
+		}
 		$this->selectDB();
 	}
 
@@ -121,7 +128,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 	/**
 	 * @param array $keys_values (key1 => value1, key2 => value2)
-	 * analog in SQL: "WHERE key1=value1 AND key2=value2"
+	 *						   analog in SQL: "WHERE key1=value1 AND key2=value2"
 	 */
 	public function startFetchIntersection(array $keys_values)
 	{
@@ -132,7 +139,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 	/**
 	 * @param array $keys_values (key1 => value1, key2 => value2)
-	 * analog in SQL: "WHERE key1=value1 AND key2=value2"
+	 *						   analog in SQL: "WHERE key1=value1 AND key2=value2"
 	 */
 	protected function getIndexesOfIntersection(array $keys_values)
 	{
@@ -232,18 +239,39 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		if (empty($this->current_fetch_keys))
 		{
-			return false;
+			if (!$this->fetch_in_progress) $this->startFetchAll();
+			else
+			{
+				$this->fetch_in_progress = false;
+				return false;
+			}
 		}
-		return $this->fetchByID(array_shift($this->current_fetch_keys));
+		$this->fetch_in_progress = true;
+		$result = $this->fetchByID(array_shift($this->current_fetch_keys));
+		return $result;
+	}
+
+	public function startFetchAll()
+	{
+		$this->current_fetch_keys = $this->redis->Keys($this->prefix_value.$this->sep.'*');
+	}
+
+	public function isCurrentFetchEmpty()
+	{
+		return empty($this->current_fetch_keys);
 	}
 
 	/**
 	 * @param int|string $id
-	 * @return array|bool
+	 * @return array|boolean
 	 */
 	public function fetchByID($id)
 	{
-		return $this->redis->hGetAll($this->getRecordKey($id));
+		if (strpos($id, $this->sep)!==false)
+		{
+			return $this->redis->hGetAll($id);
+		}
+		else return $this->redis->hGetAll($this->getRecordKey($id));
 	}
 
 	public function truncateTable()
