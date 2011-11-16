@@ -10,6 +10,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	protected $internal_index_field = ':';
 	protected $prefix_unique = 'u';
 	protected $prefix_value = 'v';
+	protected $prefix_fetch = 'f';
 	/** @var \Jamm\DataMapper\IMetaTable */
 	protected $Table;
 	protected $dbtable_key = 'db:table';
@@ -118,7 +119,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 					$field_name = $Field->getName();
 					if ($previous_values[$field_name]!=$values[$field_name])
 					{
-						$this->updateIndex($field_name, $previous_values[$field_name], $values[$field_name], $values[$index_field]);
+						$this->updateIndex($field_name, $previous_values[$field_name], $values[$field_name]);
 					}
 				}
 			}
@@ -342,7 +343,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		return $this->redis->sRem($this->getIndexName($field, $value), $primary_key_value);
 	}
 
-	protected function updateIndex($field, $old_value, $new_value, $primary_key_value)
+	protected function updateIndex($field, $old_value, $new_value)
 	{
 		$old_name = $this->getIndexName($field, $old_value);
 		$new_name = $this->getIndexName($field, $new_value);

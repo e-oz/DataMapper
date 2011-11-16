@@ -92,7 +92,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		return true;
 	}
 
-	protected function generateUniqueKey(\Jamm\DataMapper\Field $Field)
+	protected function generateUniqueKey(\Jamm\DataMapper\IField $Field)
 	{
 		$name = $Field->getName();
 		$query = $this->pdo->prepare("SELECT `$name` FROM `{$this->table_name}` WHERE `$name`=:KEY LIMIT 0,1");
