@@ -16,9 +16,9 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 	public function __construct(\Jamm\DataMapper\IMetaTable $Table, \PDO $PDO_connection)
 	{
-		$this->Table = $Table;
+		$this->Table      = $Table;
 		$this->table_name = $Table->getName();
-		$this->pdo = $PDO_connection;
+		$this->pdo        = $PDO_connection;
 	}
 
 	public function fetchByID($id)
@@ -63,6 +63,8 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 		$query = $this->pdo->prepare("UPDATE `{$this->table_name}` SET $setting WHERE `$primary_key`=".$this->pdo_prep_prefix.$primary_key);
 		if (!$query) return false;
+		$this->prepared_values[$this->pdo_prep_prefix.$primary_key] = $values[$primary_key];
+
 		$result = $query->execute($this->prepared_values);
 		return $result;
 	}
@@ -70,12 +72,12 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	protected function setPreparedBindings($values, $concatenation_string = ' , ')
 	{
 		$this->prepared_setting = NULL;
-		$this->prepared_values = NULL;
+		$this->prepared_values  = NULL;
 
 		$fields = $this->Table->getWritableFields();
 		if (empty($fields)) return false;
 
-		$params = array();
+		$params   = array();
 		$settings = array();
 
 		foreach ($fields as $Field)
@@ -83,24 +85,24 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			$name = $Field->getName();
 			if (!array_key_exists($name, $values)) continue;
 			if (!$Field->isValueAcceptable($values[$name])) continue;
-			$settings[] = '`'.$name.'`= '.$this->pdo_prep_prefix.$name;
+			$settings[]                           = '`'.$name.'`= '.$this->pdo_prep_prefix.$name;
 			$params[$this->pdo_prep_prefix.$name] = $values[$name];
 		}
 
 		$this->prepared_setting = implode($concatenation_string, $settings);
-		$this->prepared_values = $params;
+		$this->prepared_values  = $params;
 		return true;
 	}
 
 	protected function generateUniqueKey(\Jamm\DataMapper\IField $Field)
 	{
-		$name = $Field->getName();
+		$name  = $Field->getName();
 		$query = $this->pdo->prepare("SELECT `$name` FROM `{$this->table_name}` WHERE `$name`=:KEY LIMIT 0,1");
 		if (empty($query)) return false;
 
 		do
 		{
-			$key = $Field->getRandomKeyGenerator()->getKey();
+			$key   = $Field->getRandomKeyGenerator()->getKey();
 			$check = $query->execute(array(':KEY' => $key));
 			if (!$check)
 			{
