@@ -219,9 +219,12 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		$query = $this->pdo->query("SELECT * FROM `{$this->table_name}`");
 		if (!$query) return false;
-
+		if (!empty($this->fetching_query))
+		{
+			$this->fetching_query->closeCursor();
+			unset($this->fetching_query);
+		}
 		$this->fetching_query = $query;
-
 		return true;
 	}
 
