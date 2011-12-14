@@ -26,7 +26,11 @@ class Field implements IField
 	public function setAutoincrement($autoincrement = true)
 	{
 		$this->autoincrement = $autoincrement;
-		if ($autoincrement) $this->read_only = true;
+		if ($autoincrement)
+		{
+			$this->setReadOnly(true);
+			$this->setUnique(true);
+		}
 	}
 
 	public function isAutoincrement()

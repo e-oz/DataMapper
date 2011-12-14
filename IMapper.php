@@ -7,7 +7,7 @@ interface IMapper
 
 	public function update($object);
 
-	public function delete($object);
+	public function delete($id);
 
 	public function fetchNext();
 

@@ -66,10 +66,9 @@ class Mapper implements IMapper
 		return $this->storage_gateway->update($values);
 	}
 
-	public function delete($object)
+	public function delete($id)
 	{
-		$values = $this->MapToArray($object);
-		return $this->storage_gateway->delete($values);
+		return $this->storage_gateway->delete($id);
 	}
 
 	public function MapFromArray($array)

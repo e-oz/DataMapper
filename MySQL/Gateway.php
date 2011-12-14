@@ -21,6 +21,10 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$this->pdo        = $PDO_connection;
 	}
 
+	/**
+	 * @param $id
+	 * @return bool|array
+	 */
 	public function fetchByID($id)
 	{
 		if (!$primary_key = $this->getPrimaryField())
@@ -174,30 +178,18 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		}
 	}
 
-	public function delete($values)
+	public function delete($id)
 	{
 		$primary_field_name = $this->getPrimaryField();
 		if (empty($primary_field_name))
 		{
-			$this->setPreparedBindings($values, ' AND ');
-			$setting = $this->prepared_setting;
-			if (empty($setting))
-			{
-				trigger_error('empty setting string', E_USER_WARNING);
-				return false;
-			}
-			$query = $this->pdo->prepare("DELETE FROM `{$this->table_name}` WHERE {$setting}");
-			if (!$query) return false;
-			$result = $query->execute($this->prepared_values);
-			return $result;
+			trigger_error('Can not delete without primary field', E_USER_WARNING);
+			return false;
 		}
-		else
-		{
-			$query = $this->pdo->prepare("DELETE FROM `{$this->table_name}` WHERE `$primary_field_name`=:ID LIMIT 1");
-			if (!$query) return false;
-			if (!$query->execute(array(':ID' => $values[$primary_field_name]))) return false;
-			return true;
-		}
+		$query = $this->pdo->prepare("DELETE FROM `{$this->table_name}` WHERE `$primary_field_name`=:ID LIMIT 1");
+		if (!$query) return false;
+		if (!$query->execute(array(':ID' => $id))) return false;
+		return true;
 	}
 
 	/**
@@ -222,7 +214,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$this->setFetchingQuery($query);
 		return true;
 	}
-	
+
 	protected function setFetchingQuery(\PDOStatement $FetchingQuery)
 	{
 		if (!empty($this->fetching_query))

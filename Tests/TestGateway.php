@@ -26,11 +26,11 @@ class TestGateway extends \Jamm\Tester\ClassTest
 	{
 		if ($this->inserted) return true;
 		$data = array('key1' => 'value1', 'key2' => 'value2');
-		$id = $this->Gateway->insert($data);
+		$id   = $this->Gateway->insert($data);
 		$this->assertTrue($id);
 		$data['id'] = $id;
 		$this->assertEquals(print_r($this->Gateway->fetchByID($id), 1), print_r($data, 1));
-		$this->inserted = true;
+		$this->inserted    = true;
 		$this->inserted_id = $id;
 	}
 
@@ -45,7 +45,7 @@ class TestGateway extends \Jamm\Tester\ClassTest
 	public function testDelete()
 	{
 		if (!$this->inserted) $this->testInsert();
-		$this->assertTrue($this->Gateway->delete(array('id' => $this->inserted_id)));
+		$this->assertTrue($this->Gateway->delete($this->inserted_id));
 		$this->assertTrue(!$this->Gateway->fetchByID($this->inserted_id));
 	}
 }

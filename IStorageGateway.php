@@ -11,7 +11,7 @@ interface IStorageGateway
 
 	public function update($values);
 
-	public function delete($values);
+	public function delete($id);
 
 	/** @return string */
 	public function getPrimaryField();
