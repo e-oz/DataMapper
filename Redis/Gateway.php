@@ -87,7 +87,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$result = $this->redis->hMSet($this->getRecordKey($id), $values);
 		if (!$result)
 		{
-			trigger_error("Insert error: ".$this->redis->getLastErr(), E_USER_WARNING);
+			trigger_error("Insert error", E_USER_WARNING);
 			return false;
 		}
 		if (($indexed_fields = $this->Table->getIndexedFields()))
