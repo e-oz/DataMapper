@@ -12,7 +12,7 @@ class Mapper implements IMapper
 
 	public function __construct(IEntityFactory $ModelFactory, IStorageGateway $StorageGateway)
 	{
-		$this->model_factory = $ModelFactory;
+		$this->model_factory   = $ModelFactory;
 		$this->storage_gateway = $StorageGateway;
 	}
 
@@ -29,20 +29,9 @@ class Mapper implements IMapper
 		return $this->model_factory;
 	}
 
-	/**
-	 * @return IStorageGateway
-	 */
-	public function getStorageGateway()
+	public function truncateStorage()
 	{
-		return $this->storage_gateway;
-	}
-
-	/**
-	 * @param  $storage_gateway
-	 */
-	public function setStorageGateway($storage_gateway)
-	{
-		$this->storage_gateway = $storage_gateway;
+		$this->storage_gateway->truncateTable();
 	}
 
 	public function insert($object)
@@ -60,6 +49,20 @@ class Mapper implements IMapper
 		return $result;
 	}
 
+	public function fetchNext()
+	{
+		$data_array = $this->storage_gateway->fetchNext();
+		if (empty($data_array)) return false;
+		return $this->model_factory->getNewInstance($data_array);
+	}
+
+	public function fetchByID($id)
+	{
+		$data_array = $this->storage_gateway->fetchByID($id);
+		if (empty($data_array)) return false;
+		return $this->model_factory->getNewInstance($data_array);
+	}
+
 	public function update($object)
 	{
 		$values = $this->MapToArray($object);
@@ -71,7 +74,7 @@ class Mapper implements IMapper
 		return $this->storage_gateway->delete($id);
 	}
 
-	public function MapFromArray($array)
+	protected function MapFromArray($array)
 	{
 		return $this->model_factory->getNewInstance($array);
 	}
@@ -90,19 +93,5 @@ class Mapper implements IMapper
 	protected function setPrimaryFieldValue($object, $field, $value)
 	{
 		$this->getEntityConverter()->setFieldvalue($object, $field, $value);
-	}
-
-	public function fetchNext()
-	{
-		$data_array = $this->storage_gateway->fetchNext();
-		if (empty($data_array)) return false;
-		return $this->model_factory->getNewInstance($data_array);
-	}
-
-	public function fetchByID($id)
-	{
-		$data_array = $this->storage_gateway->fetchByID($id);
-		if (empty($data_array)) return false;
-		return $this->model_factory->getNewInstance($data_array);
 	}
 }
