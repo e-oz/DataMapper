@@ -16,19 +16,6 @@ class Mapper implements IMapper
 		$this->storage_gateway = $StorageGateway;
 	}
 
-	public function setModelFactory(IEntityFactory $ModelFactory)
-	{
-		$this->model_factory = $ModelFactory;
-	}
-
-	/**
-	 * @return \IEntityFactory\DataMapper\IModelFactory
-	 */
-	public function getModelFactory()
-	{
-		return $this->model_factory;
-	}
-
 	public function truncateStorage()
 	{
 		$this->storage_gateway->truncateTable();

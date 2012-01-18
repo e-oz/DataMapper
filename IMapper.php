@@ -12,4 +12,6 @@ interface IMapper
 	public function fetchNext();
 
 	public function fetchByID($id);
+
+	public function truncateStorage();
 }
