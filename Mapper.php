@@ -79,6 +79,6 @@ class Mapper implements IMapper
 
 	protected function setPrimaryFieldValue($object, $field, $value)
 	{
-		$this->getEntityConverter()->setFieldvalue($object, $field, $value);
+		$this->getEntityConverter()->setFieldValue($object, $field, $value);
 	}
 }

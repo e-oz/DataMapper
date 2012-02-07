@@ -51,7 +51,7 @@ class EntityConverter
 		return $result_array;
 	}
 
-	public function setFieldvalue($object, $field, $value)
+	public function setFieldValue($object, $field, $value)
 	{
 		try
 		{
