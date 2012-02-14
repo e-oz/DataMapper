@@ -8,7 +8,8 @@ class TestRedisGateway extends TestGateway
 
 	public function testIntersection()
 	{
-		if (!$this->inserted) $this->testInsert();
+		if (!$this->getInserted()) $this->testInsert();
+		
 		$this->Gateway->insert(array('key1' => 1, 'key2' => 12));
 		$this->Gateway->insert(array('key1' => 2, 'key2' => 2));
 		$this->Gateway->insert(array('key1' => 3, 'key2' => 32));
@@ -29,6 +30,5 @@ class TestRedisGateway extends TestGateway
 		);
 		$result = $this->Gateway->fetchNext();
 		$this->assertEquals(print_r($result, 1), print_r(array('key1' => 5, 'key2' => 2, 'id' => 6), 1));
-
 	}
 }
