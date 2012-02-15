@@ -61,7 +61,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$setting = $this->prepared_setting;
 		if (empty($setting))
 		{
-			trigger_error('empty setting string', E_USER_WARNING);
 			return false;
 		}
 
@@ -133,13 +132,15 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$this->prepareUniqKeys($values);
 		$this->setPreparedBindings($values);
 		$setting = $this->prepared_setting;
-		if (empty($setting))
+		if (!empty($setting))
 		{
-			trigger_error('empty setting string', E_USER_WARNING);
-			return false;
+			$query = $this->pdo->prepare("INSERT INTO `{$this->table_name}` SET $setting");
+		}
+		else
+		{
+			$query = $this->pdo->prepare("INSERT INTO `{$this->table_name}` () VALUES()");
 		}
 
-		$query = $this->pdo->prepare("INSERT INTO `{$this->table_name}` SET $setting");
 		if (!$query) return false;
 
 		$result = $query->execute($this->prepared_values);
