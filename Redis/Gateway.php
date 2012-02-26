@@ -17,12 +17,12 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	private $current_fetch_keys;
 	private $fetch_in_progress = false;
 
-	public function __construct(\Jamm\DataMapper\IMetaTable $MetaTable, \Jamm\Memory\RedisServer $RedisServer)
+	public function __construct(\Jamm\DataMapper\IMetaTable $MetaTable, \Jamm\Memory\IRedisServer $RedisServer)
 	{
 		$this->redis = $RedisServer;
 		$this->Table = $MetaTable;
-		$table_name = $MetaTable->getName();
-		$fields = $MetaTable->getFields();
+		$table_name  = $MetaTable->getName();
+		$fields      = $MetaTable->getFields();
 		if (empty($table_name) || empty($fields))
 		{
 			throw new \Exception("Table is not initialized");
@@ -35,7 +35,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$name = $this->Table->getDbName().$this->sep.$this->Table->getName();
 		$this->redis->Select(0);
 		$tables_data = $this->redis->get($this->dbtable_key);
-		$save = false;
+		$save        = false;
 		if (!empty($tables_data))
 		{
 			$tables = unserialize($tables_data);
@@ -43,22 +43,23 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			if (!in_array($name, $tables))
 			{
 				$tables[] = $name;
-				$save = true;
+				$save     = true;
 			}
 			$dbtable_index = array_search($name, $tables);
-			$this->redis->Select($dbtable_index);
 		}
 		else
 		{
-			$tables = array(0 => 'index');
-			$tables[] = $name;
-			$save = true;
+			$tables        = array(0 => 'index');
+			$tables[]      = $name;
+			$dbtable_index = 1;
+			$save          = true;
 		}
 		if ($save)
 		{
 			$tables_data = serialize($tables);
 			$this->redis->set($this->dbtable_key, $tables_data);
 		}
+		$this->redis->Select($dbtable_index);
 		return true;
 	}
 
@@ -72,6 +73,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$id_field = $this->Table->getPrimaryFieldName();
 		if (!empty($id_field))
 		{
+			trigger_error('Empty primary field in '.$this->Table->getName());
 			$id = $values[$id_field];
 		}
 		else
@@ -129,7 +131,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 	/**
 	 * @param array $keys_values (key1 => value1, key2 => value2)
-	 *						   analog in SQL: "WHERE key1=value1 AND key2=value2"
+	 *                           analog in SQL: "WHERE key1=value1 AND key2=value2"
 	 */
 	public function startFetchIntersection(array $keys_values)
 	{
@@ -140,7 +142,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 	/**
 	 * @param array $keys_values (key1 => value1, key2 => value2)
-	 *						   analog in SQL: "WHERE key1=value1 AND key2=value2"
+	 *                           analog in SQL: "WHERE key1=value1 AND key2=value2"
 	 */
 	protected function getIndexesOfIntersection(array $keys_values)
 	{
@@ -189,7 +191,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 	protected function deleteByID($ID)
 	{
-		$key = $this->getRecordKey($ID);
+		$key            = $this->getRecordKey($ID);
 		$indexed_fields = $this->Table->getIndexedFields();
 		if (!empty($indexed_fields))
 		{
@@ -248,7 +250,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			}
 		}
 		$this->fetch_in_progress = true;
-		$result = $this->fetchByID(array_shift($this->current_fetch_keys));
+		$result                  = $this->fetchByID(array_shift($this->current_fetch_keys));
 		return $result;
 	}
 
@@ -313,7 +315,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		do
 		{
 			$unique_key = $Field->getRandomKeyGenerator()->getKey();
-			$check = $this->addUniqueKey($name, $unique_key);
+			$check      = $this->addUniqueKey($name, $unique_key);
 			if (empty($check)) return $unique_key;
 		}
 		while (!empty($unique_key));

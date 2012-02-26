@@ -13,6 +13,7 @@ class Field implements IField
 	/** @var \Jamm\DataMapper\IRandomKeyGenerator */
 	private $RandomKeyGenerator = null;
 	private $indexed = false;
+	private $RandomKeyGenerator_field = 'RandomKeyGenerator';
 
 	public function __construct($name)
 	{
@@ -51,7 +52,10 @@ class Field implements IField
 	public function setPrimaryIndex($primary_index = true)
 	{
 		$this->primary_index = $primary_index;
-		$this->setUnique(true);
+		if ($primary_index)
+		{
+			$this->setUnique(true);
+		}
 	}
 
 	public function isPrimaryIndex()
@@ -136,7 +140,7 @@ class Field implements IField
 	public function getSchemeArray()
 	{
 		$data = get_object_vars($this);
-		if (!empty($this->RandomKeyGenerator)) $data['RandomKeyGenerator'] = get_class($this->RandomKeyGenerator);
+		if (!empty($this->RandomKeyGenerator)) $data[$this->RandomKeyGenerator_field] = get_class($this->RandomKeyGenerator);
 		return $data;
 	}
 
@@ -147,7 +151,7 @@ class Field implements IField
 		{
 			if (!array_key_exists($field, $data)) continue;
 			$value = $data[$field];
-			if ($field==='RandomKeyGenerator' && !empty($value))
+			if ($field===$this->RandomKeyGenerator_field && !empty($value))
 			{
 				if (!class_exists($value))
 				{

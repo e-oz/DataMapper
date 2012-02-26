@@ -38,7 +38,12 @@ class EntityConverter
 			foreach ($properties as $property)
 			{
 				$property->setAccessible(true);
-				$result_array[$property->getName()] = $property->getValue($object);
+				$value = $property->getValue($object);
+				if (is_object($value))
+				{
+					$value = $this->mapObjectToArray($value);
+				}
+				$result_array[$property->getName()] = $value;
 				if (!$property->isPublic()) $property->setAccessible(false);
 			}
 		}
@@ -56,7 +61,7 @@ class EntityConverter
 		try
 		{
 			$reflection = new \ReflectionClass($object);
-			$Property = $reflection->getProperty($field);
+			$Property   = $reflection->getProperty($field);
 			$Property->setAccessible(true);
 			$Property->setValue($object, $value);
 			if (!$Property->isPublic()) $Property->setAccessible(false);
