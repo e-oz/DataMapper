@@ -3,6 +3,8 @@ namespace Jamm\DataMapper;
 
 class EntityCodeGenerator
 {
+	protected $table_name_const = 'table_name';
+
 	public function getEntityClassCode(IMetaTable $Table, $namespace = '', $parent_class_name = '')
 	{
 		$fields = $Table->getFields();
@@ -12,32 +14,110 @@ class EntityCodeGenerator
 			return false;
 		}
 
-		$existing_fields = array();
-		if (!class_exists($parent_class_name))
+		if (!empty($parent_class_name))
 		{
-			$parent_class_name = '';
-		}
-		else
-		{
-			$existing_fields = $this->getExistingFields($parent_class_name);
+			if (class_exists($parent_class_name))
+			{
+				$fields = $this->getNotParentFields($parent_class_name, $fields);
+			}
+			else
+			{
+				$parent_class_name = '';
+			}
 		}
 
 		$code = $this->getClassDeclarationCode($Table, $namespace, $parent_class_name);
+		if (!empty($fields))
+		{
+			$code .= $this->getConstantsCode($fields, $Table, $parent_class_name);
+			$code .= $this->getFieldsCode($fields);
+			$code .= $this->getAccessorsCode($fields);
+		}
+		$code .= $this->getClassEnding();
+		return $code;
+	}
 
+	/**
+	 * @param string $parent_class_name
+	 * @param IField[] $fields
+	 * @return array
+	 */
+	protected function getNotParentFields($parent_class_name, $fields)
+	{
+		$existing_fields = $this->getExistingFields($parent_class_name);
+		if (!empty($existing_fields))
+		{
+			$new_fields = array();
+			foreach ($fields as $Field)
+			{
+				if (!in_array($Field->getName(), $existing_fields))
+				{
+					$new_fields[] = $Field;
+				}
+			}
+			return $new_fields;
+		}
+		return $fields;
+	}
+
+	/**
+	 * @param IField[] $fields
+	 * @param IMetaTable $Table
+	 * @param $parent_class_name
+	 * @return string
+	 */
+	protected function getConstantsCode($fields, $Table, $parent_class_name)
+	{
+		$code       = '';
+		$table_name = $Table->getName();
+		if (empty($parent_class_name) || !defined($parent_class_name.'::'.$this->table_name_const))
+		{
+			if (!empty($table_name))
+			{
+				$code .= $this->getTableConstantDeclaration($table_name);
+			}
+		}
 		foreach ($fields as $Field)
 		{
-			if (in_array($Field->getName(), $existing_fields)) continue;
+			$code .= $this->getConstantDeclarationCode($Field);
+		}
+		return $code;
+	}
+
+	protected function getClassEnding()
+	{
+		return '}'.PHP_EOL;
+	}
+
+	/**
+	 * @param IField[] $fields
+	 * @return string
+	 */
+	protected function getFieldsCode($fields)
+	{
+		$code = '';
+		foreach ($fields as $Field)
+		{
 			$code .= $this->getFieldDeclarationCode($Field);
 		}
+		return $code;
+	}
 
+	/**
+	 * @param IField[] $fields
+	 * @return string
+	 */
+	protected function getAccessorsCode($fields)
+	{
+		$code = '';
 		foreach ($fields as $Field)
 		{
-			if (in_array($Field->getName(), $existing_fields)) continue;
-			$code .= PHP_EOL.$this->getFieldGetterCode($Field->getName()).PHP_EOL;
-			if (!$Field->isReadOnly()) $code .= PHP_EOL.$this->getFieldSetterCode($Field->getName()).PHP_EOL;
+			$code .= $this->getFieldGetterCode($Field->getName());
+			if (!$Field->isReadOnly())
+			{
+				$code .= $this->getFieldSetterCode($Field->getName());
+			}
 		}
-
-		$code .= '}'.PHP_EOL;
 		return $code;
 	}
 
@@ -80,20 +160,31 @@ class EntityCodeGenerator
 		return $code;
 	}
 
+	protected function getTableConstantDeclaration($table_name)
+	{
+		return "\tconst ".$this->table_name_const." = '".$table_name."';".PHP_EOL;
+	}
+
+	protected function getConstantDeclarationCode(IField $Field)
+	{
+		$code = "\tconst field_".$Field->getName()." = '".$Field->getName()."';".PHP_EOL;
+		return $code;
+	}
+
 	protected function getFieldGetterCode($field_name)
 	{
-		return "\tpublic function get".$this->inCamelCase($field_name).'()'.PHP_EOL
+		return PHP_EOL."\tpublic function get".$this->inCamelCase($field_name).'()'.PHP_EOL
 				."\t{".PHP_EOL
 				."\t\t".'return $this->'.$field_name.';'.PHP_EOL
-				."\t}";
+				."\t}".PHP_EOL;
 	}
 
 	protected function getFieldSetterCode($field_name)
 	{
-		return "\tpublic function set".$this->inCamelCase($field_name).'($'.$field_name.')'.PHP_EOL
+		return PHP_EOL."\tpublic function set".$this->inCamelCase($field_name).'($'.$field_name.')'.PHP_EOL
 				."\t{".PHP_EOL
 				."\t\t".'$this->'.$field_name.' = $'.$field_name.';'.PHP_EOL
-				."\t}";
+				."\t}".PHP_EOL;
 	}
 
 	public function inCamelCase($string)

@@ -1,7 +1,7 @@
 <?php
 namespace Jamm\DataMapper;
 
-class EntityConverter
+class EntityConverter implements IEntityConverter
 {
 	public function mapObjectFromArray($object, $data_array)
 	{
