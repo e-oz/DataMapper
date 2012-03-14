@@ -81,4 +81,14 @@ class Mapper implements IMapper
 	{
 		$this->getEntityConverter()->setFieldValue($object, $field, $value);
 	}
+
+	/**
+	 * @param int $offset
+	 * @param int $limit
+	 * @return boolean
+	 */
+	public function startFetchAll($offset = 0, $limit = 0)
+	{
+		$this->storage_gateway->startFetchAll($offset, $limit);
+	}
 }
