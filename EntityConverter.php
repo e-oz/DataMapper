@@ -12,7 +12,8 @@ class EntityConverter implements IEntityConverter
 			foreach ($properties as $property)
 			{
 				$name = $property->getName();
-				if (array_key_exists($name, $data_array))
+				//if value is set and not NULL
+				if (isset($data_array[$name]))
 				{
 					$property->setAccessible(true);
 					$property->setValue($object, $data_array[$name]);

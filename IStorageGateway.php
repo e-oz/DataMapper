@@ -20,6 +20,13 @@ interface IStorageGateway
 	public function fetchNext();
 
 	/**
+	 * @param int $offset
+	 * @param int $limit
+	 * @return boolean
+	 */
+	public function startFetchAll($offset = 0, $limit = 0);
+
+	/**
 	 * @param int|string $id
 	 * @return array|bool
 	 */

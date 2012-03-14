@@ -157,6 +157,32 @@ class TestGateway extends \Jamm\Tester\ClassTest
 		$this->assertTrue(!$this->Gateway->fetchByID($this->inserted_id));
 	}
 
+	public function testSelectLimit()
+	{
+		for ($i = 0; $i < 99; $i++)
+		{
+			$this->Gateway->insert(array());
+		}
+		$id_field = $this->MetaTable->getPrimaryFieldName();
+		$results  = array();
+		for ($j = 0; $j < 10; $j++)
+		{
+			if (!$this->Gateway->startFetchAll(0, 10))
+			{
+				break;
+			}
+			while (($result = $this->Gateway->fetchNext()))
+			{
+				$results[] = $result;
+			}
+		}
+		$this->assertEquals(count($results), 100);
+		foreach ($results as $result)
+		{
+			$this->Gateway->delete($result[$id_field]);
+		}
+	}
+
 	protected function getInserted()
 	{
 		return $this->inserted;
