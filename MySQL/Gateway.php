@@ -248,4 +248,9 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		if (!$query) return false;
 		return true;
 	}
+	
+	public function getTableName()
+	{
+		return $this->Table->getName();
+	}	
 }

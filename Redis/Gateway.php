@@ -391,4 +391,9 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		$this->current_fetch_keys = $fetch_keys;
 	}
+
+	public function getTableName()
+	{
+		return $this->Table->getName();
+	}
 }

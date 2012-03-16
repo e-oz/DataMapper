@@ -47,4 +47,6 @@ interface IMetaTable
 	public function getDbName();
 
 	public function setDbName($db_name);
+	
+	public function removeFieldByName($name);
 }

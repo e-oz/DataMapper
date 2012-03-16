@@ -186,4 +186,10 @@ class MetaTable implements IMetaTable
 		return true;
 	}
 
+	public function removeFieldByName($name)
+	{
+		if (!isset($this->fields[$name])) return false;
+		unset($this->fields[$name]);
+		return true;
+	}
 }

@@ -4,7 +4,7 @@ namespace Jamm\DataMapper;
 class Mapper implements IMapper
 {
 	/** @var IEntityFactory */
-	protected $model_factory;
+	private $model_factory;
 	/** @var IStorageGateway */
 	protected $storage_gateway;
 	/** @var EntityConverter */
@@ -18,12 +18,12 @@ class Mapper implements IMapper
 
 	public function truncateStorage()
 	{
-		$this->storage_gateway->truncateTable();
+		return $this->storage_gateway->truncateTable();
 	}
 
 	public function insert($object)
 	{
-		$values = $this->MapToArray($object);
+		$values = $this->mapToArray($object);
 		$result = $this->storage_gateway->insert($values);
 		if (!empty($result))
 		{
@@ -40,19 +40,19 @@ class Mapper implements IMapper
 	{
 		$data_array = $this->storage_gateway->fetchNext();
 		if (empty($data_array)) return false;
-		return $this->model_factory->getNewInstance($data_array);
+		return $this->mapFromArray($data_array);
 	}
 
 	public function fetchByID($id)
 	{
 		$data_array = $this->storage_gateway->fetchByID($id);
 		if (empty($data_array)) return false;
-		return $this->model_factory->getNewInstance($data_array);
+		return $this->mapFromArray($data_array);
 	}
 
 	public function update($object)
 	{
-		$values = $this->MapToArray($object);
+		$values = $this->mapToArray($object);
 		return $this->storage_gateway->update($values);
 	}
 
@@ -61,7 +61,7 @@ class Mapper implements IMapper
 		return $this->storage_gateway->delete($id);
 	}
 
-	protected function MapFromArray($array)
+	protected function mapFromArray($array)
 	{
 		return $this->model_factory->getNewInstance($array);
 	}
@@ -72,7 +72,7 @@ class Mapper implements IMapper
 		return $this->EntityConverter;
 	}
 
-	protected function MapToArray($object)
+	protected function mapToArray($object)
 	{
 		return $this->getEntityConverter()->mapObjectToArray($object);
 	}

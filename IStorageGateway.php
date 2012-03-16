@@ -33,4 +33,6 @@ interface IStorageGateway
 	public function fetchByID($id);
 
 	public function truncateTable();
+	
+	public function getTableName();
 }
