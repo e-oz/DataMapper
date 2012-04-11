@@ -89,6 +89,6 @@ class Mapper implements IMapper
 	 */
 	public function startFetchAll($offset = 0, $limit = 0)
 	{
-		$this->storage_gateway->startFetchAll($offset, $limit);
+		return $this->storage_gateway->startFetchAll($offset, $limit);
 	}
 }
