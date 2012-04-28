@@ -60,4 +60,8 @@ interface IField
 	public function getSchemeArray();
 
 	public function mapSchemeArray(array $data);
+
+	public function getCommentary();
+
+	public function setCommentary($commentary);
 }

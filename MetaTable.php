@@ -10,6 +10,7 @@ class MetaTable implements IMetaTable
 	private $db_name;
 	private $writable_fields;
 	private $indexed_fields;
+	private $commentary;
 
 	public function __construct($table_name = '')
 	{
@@ -159,18 +160,12 @@ class MetaTable implements IMetaTable
 
 	public function mapFromDB(\PDO $PDO_connection)
 	{
-		$query = $PDO_connection->prepare("SHOW COLUMNS FROM `{$this->name}`");
-		if (!$query)
+		$table_info = $this->fetchTableInfoFromDB($PDO_connection);
+		if (!empty($table_info['Comment']))
 		{
-			trigger_error(implode(' ', $PDO_connection->errorInfo()), E_USER_WARNING);
-			return false;
+			$this->setCommentary($table_info['Comment']);
 		}
-		if (!$query->execute())
-		{
-			trigger_error(implode(' ', $query->errorInfo()), E_USER_WARNING);
-			return false;
-		}
-		$columns = $query->fetchAll(\PDO::FETCH_ASSOC);
+		$columns = $this->fetchTableColumnsInfoFromDB($PDO_connection);
 		foreach ($columns as $column)
 		{
 			$name = $column['Field'];
@@ -181,9 +176,35 @@ class MetaTable implements IMetaTable
 			if ($column['Key']==='UNI') $Field->setUnique(true);
 			if ($column['Extra']==='auto_increment') $Field->setAutoincrement(true);
 			if ($column['Null']!='NO') $Field->setNotNull(false);
+			if (!empty($column['Comment'])) $Field->setCommentary($column['Comment']);
 			$this->addField($Field);
 		}
 		return true;
+	}
+
+	protected function fetchTableColumnsInfoFromDB(\PDO $PDO_connection)
+	{
+		$query = $PDO_connection->query("SHOW FULL COLUMNS FROM `{$this->name}`");
+		if (!$query)
+		{
+			trigger_error(implode(' ', $PDO_connection->errorInfo()), E_USER_WARNING);
+			return false;
+		}
+		return $query->fetchAll(\PDO::FETCH_ASSOC);
+	}
+
+	protected function fetchTableInfoFromDB(\PDO $PDO_connection)
+	{
+		$sql   = "SHOW TABLE STATUS WHERE Name='".$this->name."'";
+		$query = $PDO_connection->query($sql);
+		if (!$query)
+		{
+			trigger_error($sql.'; '.implode(' ', $PDO_connection->errorInfo()), E_USER_WARNING);
+			return false;
+		}
+		$result = $query->fetch(\PDO::FETCH_ASSOC);
+		$query->closeCursor();
+		return $result;
 	}
 
 	public function removeFieldByName($name)
@@ -191,5 +212,15 @@ class MetaTable implements IMetaTable
 		if (!isset($this->fields[$name])) return false;
 		unset($this->fields[$name]);
 		return true;
+	}
+
+	public function getCommentary()
+	{
+		return $this->commentary;
+	}
+
+	public function setCommentary($commentary)
+	{
+		$this->commentary = $commentary;
 	}
 }

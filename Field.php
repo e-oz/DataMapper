@@ -14,6 +14,7 @@ class Field implements IField
 	private $RandomKeyGenerator = null;
 	private $indexed = false;
 	private $RandomKeyGenerator_field = 'RandomKeyGenerator';
+	private $commentary;
 
 	public function __construct($name)
 	{
@@ -163,5 +164,15 @@ class Field implements IField
 			$this->$field = $value;
 		}
 		return true;
+	}
+
+	public function getCommentary()
+	{
+		return $this->commentary;
+	}
+
+	public function setCommentary($commentary)
+	{
+		$this->commentary = $commentary;
 	}
 }

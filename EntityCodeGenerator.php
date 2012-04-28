@@ -112,10 +112,10 @@ class EntityCodeGenerator
 		$code = '';
 		foreach ($fields as $Field)
 		{
-			$code .= $this->getFieldGetterCode($Field->getName());
+			$code .= $this->getFieldGetterCode($Field);
 			if (!$Field->isReadOnly())
 			{
-				$code .= $this->getFieldSetterCode($Field->getName());
+				$code .= $this->getFieldSetterCode($Field);
 			}
 		}
 		return $code;
@@ -140,7 +140,10 @@ class EntityCodeGenerator
 	{
 		$code = '<?php'.PHP_EOL;
 		if (!empty($namespace)) $code .= 'namespace '.$namespace.';'.PHP_EOL.PHP_EOL;
-		$code .= '/**'.PHP_EOL.' * Table: '.$Table->getName().PHP_EOL.' */'.PHP_EOL;
+		if (empty($parent_class_name) && ($commentary = $Table->getCommentary()))
+		{
+			$code .= '/**'.PHP_EOL.' * '.$commentary.PHP_EOL.' */'.PHP_EOL;
+		}
 		$code .= 'class '.$this->inCamelCase($Table->getName());
 		if (!empty($parent_class_name)) $code .= ' extends '.$parent_class_name;
 		$code .= PHP_EOL.'{'.PHP_EOL;
@@ -149,15 +152,90 @@ class EntityCodeGenerator
 
 	protected function getFieldDeclarationCode(IField $Field)
 	{
-		$code = "\t/** column type: ".$Field->getType();
-		if (!$Field->isNotNull()) $code .= ' NULL';
-		if ($Field->isAutoincrement()) $code .= ' autoincrement';
-		if ($Field->isPrimaryIndex()) $code .= ' @primary';
-		if ($Field->isReadOnly()) $code .= ' @readonly';
-		if ($Field->isUnique()) $code .= ' @unique';
-		$code .= ' */'.PHP_EOL;
-		$code .= "\tprotected $".$Field->getName().';'.PHP_EOL;
+		$code  = '';
+		$lines = array();
+		if (($commentary = $Field->getCommentary()))
+		{
+			$lines[] = $commentary;
+		}
+		$attributes = array();
+		if (($type = $this->getPHPTypeFromCustom($Field->getType()))!==false)
+		{
+			$attributes[] = "@var ".$type;
+		}
+		else
+		{
+			$attributes[] = "@type ".$Field->getType();
+		}
+		if (!$Field->isNotNull()) $attributes[] = '@NULL';
+		if ($Field->isAutoincrement()) $attributes[] = '@autoincrement';
+		if ($Field->isPrimaryIndex()) $attributes[] = '@primary';
+		if ($Field->isReadOnly()) $attributes[] = '@readonly';
+		if ($Field->isUnique()) $attributes[] = '@unique';
+		if (!empty($attributes))
+		{
+			$lines[] = implode(' ', $attributes);
+		}
+		if (!empty($lines))
+		{
+			if (count($lines) > 1)
+			{
+				$code = PHP_EOL."\t/**"
+						.PHP_EOL."\t * "
+						.implode(PHP_EOL."\t * ", $lines)
+						.PHP_EOL."\t */".PHP_EOL;
+			}
+			else
+			{
+				$code = "\t/** ".$lines[0]." */".PHP_EOL;
+			}
+			$code .= "\tprotected $".$Field->getName().";".PHP_EOL;
+		}
 		return $code;
+	}
+
+	/**
+	 * @param string $type
+	 */
+	protected function getPHPTypeFromCustom($type)
+	{
+		$mysql_types = array(
+			'BIT'       => 'int',
+			'BOOL'      => 'int',
+			'INT'       => 'int',
+			'TINYINT'   => 'int',
+			'BIGINT'    => 'int',
+			'SERIAL'    => 'int',
+			'NUMERIC'   => 'int',
+			'DECIMAL'   => 'float',
+			'DEC'       => 'float',
+			'FLOAT'     => 'float',
+			'DOUBLE'    => 'float',
+			'CHAR'      => 'string',
+			'VARCHAR'   => 'string',
+			'BINARY'    => 'string',
+			'BLOB'      => 'string',
+			'TEXT'      => 'string',
+			'TINYTEXT'  => 'string',
+			'ENUM'      => 'string',
+			'SET'       => 'string',
+			'DATE'      => 'string',
+			'DATETIME'  => 'string',
+			'TIMESTAMP' => 'int');
+		$type        = strtoupper(trim($type));
+		if (($space_pos = strpos($type, ' '))!==false)
+		{
+			$type = substr($type, 0, $space_pos);
+		}
+		if (($brace_pos = strpos($type, '('))!==false)
+		{
+			$type = substr($type, 0, $brace_pos);
+		}
+		if (isset($mysql_types[$type]))
+		{
+			return $mysql_types[$type];
+		}
+		else return false;
 	}
 
 	protected function getTableConstantDeclaration($table_name)
@@ -171,20 +249,31 @@ class EntityCodeGenerator
 		return $code;
 	}
 
-	protected function getFieldGetterCode($field_name)
+	protected function getFieldGetterCode(IField $Field)
 	{
+		$field_name = $Field->getName();
 		return PHP_EOL."\tpublic function get".$this->inCamelCase($field_name).'()'.PHP_EOL
 				."\t{".PHP_EOL
 				."\t\t".'return $this->'.$field_name.';'.PHP_EOL
 				."\t}".PHP_EOL;
 	}
 
-	protected function getFieldSetterCode($field_name)
+	protected function getFieldSetterCode(IField $Field)
 	{
-		return PHP_EOL."\tpublic function set".$this->inCamelCase($field_name).'($'.$field_name.')'.PHP_EOL
+		$field_name = $Field->getName();
+		$code       = '';
+		if (($type = $this->getPHPTypeFromCustom($Field->getType())))
+		{
+			$code .= PHP_EOL
+					."\t/**".PHP_EOL
+					."\t * @param $type $$field_name".PHP_EOL
+					."\t */";
+		}
+		$code .= PHP_EOL."\tpublic function set".$this->inCamelCase($field_name).'($'.$field_name.')'.PHP_EOL
 				."\t{".PHP_EOL
 				."\t\t".'$this->'.$field_name.' = $'.$field_name.';'.PHP_EOL
 				."\t}".PHP_EOL;
+		return $code;
 	}
 
 	public function inCamelCase($string)

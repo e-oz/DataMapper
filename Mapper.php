@@ -91,4 +91,12 @@ class Mapper implements IMapper
 	{
 		return $this->storage_gateway->startFetchAll($offset, $limit);
 	}
+
+	/**
+	 * @return \Jamm\DataMapper\IEntityFactory
+	 */
+	protected function getModelFactory()
+	{
+		return $this->model_factory;
+	}
 }

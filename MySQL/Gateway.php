@@ -29,7 +29,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		if (!$primary_key = $this->getPrimaryField())
 		{
-			trigger_error('Primary field is empty', E_USER_WARNING);
+			trigger_error('Primary field in table '.$this->table_name.' is empty', E_USER_WARNING);
 			return false;
 		}
 
