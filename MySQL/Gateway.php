@@ -127,7 +127,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	 * @param $values
 	 * @return bool|string true, false, or last inserted ID
 	 */
-	public function insert($values)
+	public function insert($values = array())
 	{
 		$this->prepareUniqKeys($values);
 		$this->setPreparedBindings($values);

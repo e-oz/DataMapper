@@ -21,7 +21,7 @@ class Mapper implements IMapper
 		return $this->storage_gateway->truncateTable();
 	}
 
-	public function insert($object)
+	public function insert($object = null)
 	{
 		$values = $this->mapToArray($object);
 		$result = $this->storage_gateway->insert($values);

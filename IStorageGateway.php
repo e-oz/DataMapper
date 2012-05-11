@@ -7,7 +7,7 @@ interface IStorageGateway
 	 * @param array $values
 	 * @return bool|string true, false, or last inserted ID
 	 */
-	public function insert($values);
+	public function insert($values = array());
 
 	public function update($values);
 
@@ -33,6 +33,6 @@ interface IStorageGateway
 	public function fetchByID($id);
 
 	public function truncateTable();
-	
+
 	public function getTableName();
 }

@@ -3,7 +3,7 @@ namespace Jamm\DataMapper;
 
 interface IMapper
 {
-	public function insert($object);
+	public function insert($object = null);
 
 	public function update($object);
 
@@ -16,7 +16,7 @@ interface IMapper
 	 * @param int $limit
 	 * @return boolean
 	 */
-	public function startFetchAll($offset = 0, $limit = 0);	
+	public function startFetchAll($offset = 0, $limit = 0);
 
 	public function fetchByID($id);
 
