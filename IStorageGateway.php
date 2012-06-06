@@ -22,9 +22,11 @@ interface IStorageGateway
 	/**
 	 * @param int $offset
 	 * @param int $limit
+	 * @param array $filter_keys
+	 * @param array $filter_key_values
 	 * @return boolean
 	 */
-	public function startFetchAll($offset = 0, $limit = 0);
+	public function startFetchAll($offset = 0, $limit = 0, $filter_keys = array(), $filter_key_values = array());
 
 	/**
 	 * @param int|string $id

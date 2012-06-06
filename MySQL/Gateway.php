@@ -208,17 +208,37 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		return true;
 	}
 
-	public function startFetchAll($offset = 0, $limit = 0)
+	public function startFetchAll($offset = 0, $limit = 0, $filter_keys = array(), $filter_key_values = array())
 	{
-		if ($offset!=0 || $limit!=0)
+		$statements = array();
+		$SQL        = "SELECT ";
+		if (!empty($filter_keys))
 		{
-			$query = $this->pdo->query("SELECT * FROM `{$this->table_name}` LIMIT ".intval($offset).", ".intval($limit));
+			$SQL .= '`'.implode('`,`', $filter_keys).'`';
 		}
 		else
 		{
-			$query = $this->pdo->query("SELECT * FROM `{$this->table_name}`");
+			$SQL .= '*';
 		}
-		if (!$query) return false;
+		$SQL .= " FROM `{$this->table_name}`";
+		if (!empty($filter_key_values))
+		{
+			$SQL .= ' WHERE '.$this->getWhereStringValue($filter_key_values, $statements);
+		}
+		if ($offset!=0 || $limit!=0)
+		{
+			$SQL .= " LIMIT ".intval($offset).", ".intval($limit);
+		}
+		if (!($query = $this->pdo->prepare($SQL)))
+		{
+			trigger_error($SQL, E_USER_WARNING);
+			return false;
+		}
+		if (!$query->execute($statements))
+		{
+			trigger_error($SQL, E_USER_WARNING);
+			return false;
+		}
 		$this->setFetchingQuery($query);
 		return true;
 	}
@@ -248,9 +268,21 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		if (!$query) return false;
 		return true;
 	}
-	
+
 	public function getTableName()
 	{
 		return $this->Table->getName();
-	}	
+	}
+
+	private function getWhereStringValue($filter_key_values_array, &$statements)
+	{
+		$wheres     = array();
+		$statements = array();
+		foreach ($filter_key_values_array as $key=> $value)
+		{
+			$wheres[]                                = $key.'='.$this->pdo_prep_prefix.$key;
+			$statements[$this->pdo_prep_prefix.$key] = $value;
+		}
+		return implode(' AND ', $wheres);
+	}
 }

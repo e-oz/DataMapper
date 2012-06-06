@@ -1,7 +1,7 @@
 <?php
 namespace Jamm\DataMapper;
 
-class EntityConverter implements IEntityConverter
+trait EntityConverterTrait
 {
 	public function mapObjectFromArray($object, $data_array)
 	{
@@ -27,6 +27,20 @@ class EntityConverter implements IEntityConverter
 			trigger_error($exception->getMessage(), E_USER_WARNING);
 			return false;
 		}
+	}
+
+	public function mapObjectsArrayFromArraysList($object_instance, $arrays_list)
+	{
+		if (empty($arrays_list)) return false;
+		$objects = array();
+		foreach ($arrays_list as $data)
+		{
+			if (!is_array($data)) continue;
+			$object = clone $object_instance;
+			$this->mapObjectFromArray($object, $data);
+			$objects[] = $object;
+		}
+		return $objects;
 	}
 
 	public function mapObjectToArray($object)

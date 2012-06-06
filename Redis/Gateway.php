@@ -254,7 +254,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		return $result;
 	}
 
-	public function startFetchAll($offset = 0, $limit = 0)
+	public function startFetchAll($offset = 0, $limit = 0, $filter_keys = array(), $filter_key_values = array())
 	{
 		if (!($this->current_fetch_keys = $this->redis->Keys($this->prefix_value.$this->sep.'*')))
 		{

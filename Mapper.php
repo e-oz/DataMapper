@@ -23,7 +23,8 @@ class Mapper implements IMapper
 
 	public function insert($object = null)
 	{
-		$values = $this->mapToArray($object);
+		if (is_object($object)) $values = $this->mapToArray($object);
+		else $values = array();
 		$result = $this->storage_gateway->insert($values);
 		if (!empty($result))
 		{
@@ -82,14 +83,9 @@ class Mapper implements IMapper
 		$this->getEntityConverter()->setFieldValue($object, $field, $value);
 	}
 
-	/**
-	 * @param int $offset
-	 * @param int $limit
-	 * @return boolean
-	 */
-	public function startFetchAll($offset = 0, $limit = 0)
+	public function startFetchAll($offset = 0, $limit = 0, $filter_keys = array(), $filter_key_values = array())
 	{
-		return $this->storage_gateway->startFetchAll($offset, $limit);
+		return $this->storage_gateway->startFetchAll($offset, $limit, $filter_keys, $filter_key_values);
 	}
 
 	/**
