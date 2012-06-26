@@ -3,14 +3,7 @@ namespace Jamm\DataMapper;
 
 abstract class EntityFactory implements IEntityFactory
 {
-	/** @var EntityConverter */
-	protected $EntityConverter;
-
-	protected function mapObjectFromArray($object, $data_array)
-	{
-		if (empty($this->EntityConverter)) $this->EntityConverter = new EntityConverter();
-		return $this->EntityConverter->mapObjectFromArray($object, $data_array);
-	}
+	use \Jamm\DataMapper\EntityConverter;
 
 	public function getNewInstance(array $map_from_array = NULL)
 	{

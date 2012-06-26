@@ -3,6 +3,8 @@ namespace Jamm\DataMapper;
 
 class EntityCodeGenerator
 {
+	use CamelCase;
+
 	protected $table_name_const = 'table_name';
 
 	public function getEntityClassCode(IMetaTable $Table, $namespace = '', $parent_class_name = '')
@@ -139,7 +141,7 @@ class EntityCodeGenerator
 	protected function getClassDeclarationCode(IMetaTable $Table, $namespace = '', $parent_class_name = '')
 	{
 		$code = '<?php'.PHP_EOL;
-		if (!empty($namespace)) $code .= 'namespace '.$namespace.';'.PHP_EOL.PHP_EOL;
+		if (!empty($namespace)) $code .= 'namespace '.$namespace.';'.PHP_EOL;
 		if (empty($parent_class_name) && ($commentary = $Table->getCommentary()))
 		{
 			$code .= '/**'.PHP_EOL.' * '.$commentary.PHP_EOL.' */'.PHP_EOL;
@@ -274,13 +276,5 @@ class EntityCodeGenerator
 				."\t\t".'$this->'.$field_name.' = $'.$field_name.';'.PHP_EOL
 				."\t}".PHP_EOL;
 		return $code;
-	}
-
-	public function inCamelCase($string)
-	{
-		$string = str_replace('_', ' ', $string);
-		$string = ucwords(strtolower($string));
-		$string = str_replace(' ', '', $string);
-		return $string;
 	}
 }

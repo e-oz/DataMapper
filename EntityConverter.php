@@ -1,7 +1,6 @@
 <?php
 namespace Jamm\DataMapper;
-
-class EntityConverter implements IEntityConverter
+trait EntityConverter
 {
 	public function mapObjectFromArray($object, $data_array)
 	{
@@ -29,7 +28,21 @@ class EntityConverter implements IEntityConverter
 		}
 	}
 
-	public function mapObjectToArray($object)
+	public function mapObjectsArrayFromArraysList($object_instance, $arrays_list)
+	{
+		if (empty($arrays_list)) return false;
+		$objects = array();
+		foreach ($arrays_list as $data)
+		{
+			if (!is_array($data)) continue;
+			$object = clone $object_instance;
+			$this->mapObjectFromArray($object, $data);
+			$objects[] = $object;
+		}
+		return $objects;
+	}
+
+	public function mapObjectToArray($object, $with_empty_fields = false)
 	{
 		$result_array = array();
 		if (empty($object)) return $result_array;
@@ -41,6 +54,10 @@ class EntityConverter implements IEntityConverter
 			{
 				$property->setAccessible(true);
 				$value = $property->getValue($object);
+				if (!isset($value) || is_null($value))
+				{
+					if (!$with_empty_fields) continue;
+				}
 				if (is_object($value))
 				{
 					$value = $this->mapObjectToArray($value);
@@ -54,7 +71,6 @@ class EntityConverter implements IEntityConverter
 			trigger_error($exception->getMessage(), E_USER_WARNING);
 			return false;
 		}
-
 		return $result_array;
 	}
 
@@ -74,5 +90,11 @@ class EntityConverter implements IEntityConverter
 			return false;
 		}
 		return true;
+	}
+
+	public function getFieldsListOfObject($object)
+	{
+		$array = $this->mapObjectToArray($object, true);
+		return array_keys($array);
 	}
 }

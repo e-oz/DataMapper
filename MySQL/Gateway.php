@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper\MySQL;
-
 class Gateway implements \Jamm\DataMapper\IStorageGateway
 {
 	/** @var \PDO */
@@ -32,7 +31,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			trigger_error('Primary field in table '.$this->table_name.' is empty', E_USER_WARNING);
 			return false;
 		}
-
 		$query = $this->pdo->prepare("SELECT * FROM `{$this->table_name}` WHERE `$primary_key`=:ID LIMIT 0,1");
 		if (!$query) return false;
 		if (!$query->execute(array(':ID' => $id))) return false;
@@ -56,19 +54,16 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			trigger_error('Records can be updated only using primary key.', E_USER_WARNING);
 			return false;
 		}
-
 		$this->setPreparedBindings($values);
 		$setting = $this->prepared_setting;
 		if (empty($setting))
 		{
 			return false;
 		}
-
 		$query = $this->pdo->prepare("UPDATE `{$this->table_name}` SET $setting WHERE `$primary_key`=".$this->pdo_prep_prefix.$primary_key);
 		if (!$query) return false;
 		$this->prepared_values[$this->pdo_prep_prefix.$primary_key] = $values[$primary_key];
-
-		$result = $query->execute($this->prepared_values);
+		$result                                                     = $query->execute($this->prepared_values);
 		return $result;
 	}
 
@@ -76,13 +71,10 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		$this->prepared_setting = NULL;
 		$this->prepared_values  = NULL;
-
-		$fields = $this->Table->getWritableFields();
+		$fields                 = $this->Table->getWritableFields();
 		if (empty($fields)) return false;
-
 		$params   = array();
 		$settings = array();
-
 		foreach ($fields as $Field)
 		{
 			$name = $Field->getName();
@@ -91,7 +83,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			$settings[]                           = '`'.$name.'`= '.$this->pdo_prep_prefix.$name;
 			$params[$this->pdo_prep_prefix.$name] = $values[$name];
 		}
-
 		$this->prepared_setting = implode($concatenation_string, $settings);
 		$this->prepared_values  = $params;
 		return true;
@@ -102,7 +93,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$name  = $Field->getName();
 		$query = $this->pdo->prepare("SELECT `$name` FROM `{$this->table_name}` WHERE `$name`=:KEY LIMIT 0,1");
 		if (empty($query)) return false;
-
 		do
 		{
 			$key   = $Field->getRandomKeyGenerator()->getKey();
@@ -113,8 +103,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			}
 			$result = $query->fetch(\PDO::FETCH_ASSOC);
 			if (empty($result)) return $key;
-		}
-		while (!empty($key));
+		} while (!empty($key));
 		return false;
 	}
 
@@ -140,12 +129,9 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		{
 			$query = $this->pdo->prepare("INSERT INTO `{$this->table_name}` () VALUES()");
 		}
-
 		if (!$query) return false;
-
 		$result = $query->execute($this->prepared_values);
 		if (!$result) return false;
-
 		$id_field = $this->Table->getPrimaryFieldName();
 		if (!empty($id_field))
 		{
@@ -165,7 +151,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		$fields = $this->Table->getWritableFields();
 		if (empty($fields)) return false;
-
 		foreach ($fields as $Field)
 		{
 			$name = $Field->getName();
@@ -254,7 +239,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	}
 
 	/**
-	 * @return array
+	 * @return array|bool
 	 */
 	public function fetchNext()
 	{
@@ -276,13 +261,21 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 	private function getWhereStringValue($filter_key_values_array, &$statements)
 	{
-		$wheres     = array();
-		$statements = array();
-		foreach ($filter_key_values_array as $key=> $value)
-		{
-			$wheres[]                                = $key.'='.$this->pdo_prep_prefix.$key;
-			$statements[$this->pdo_prep_prefix.$key] = $value;
-		}
-		return implode(' AND ', $wheres);
+		$FilterConverter = $this->getNewFilterConverter();
+		$PrepareValues   = $this->getNewPrepareValues();
+		$PrepareValues->setPrefix($this->pdo_prep_prefix);
+		$where_string = $FilterConverter->getSQLStringFromFilterArray($filter_key_values_array, $PrepareValues);
+		$statements   = $PrepareValues->getStatements();
+		return $where_string;
+	}
+
+	protected function getNewFilterConverter()
+	{
+		return new \Jamm\DataMapper\FilterConverter\SQL\Converter();
+	}
+
+	protected function getNewPrepareValues()
+	{
+		return new \Jamm\DataMapper\FilterConverter\SQL\PrepareValues();
 	}
 }

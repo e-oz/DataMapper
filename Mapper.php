@@ -3,12 +3,12 @@ namespace Jamm\DataMapper;
 
 class Mapper implements IMapper
 {
+	use \Jamm\DataMapper\EntityConverter;
+
 	/** @var IEntityFactory */
 	private $model_factory;
 	/** @var IStorageGateway */
 	protected $storage_gateway;
-	/** @var EntityConverter */
-	protected $EntityConverter;
 
 	public function __construct(IEntityFactory $ModelFactory, IStorageGateway $StorageGateway)
 	{
@@ -67,20 +67,14 @@ class Mapper implements IMapper
 		return $this->model_factory->getNewInstance($array);
 	}
 
-	protected function getEntityConverter()
-	{
-		if (empty($this->EntityConverter)) $this->EntityConverter = new EntityConverter();
-		return $this->EntityConverter;
-	}
-
 	protected function mapToArray($object)
 	{
-		return $this->getEntityConverter()->mapObjectToArray($object);
+		return $this->mapObjectToArray($object);
 	}
 
 	protected function setPrimaryFieldValue($object, $field, $value)
 	{
-		$this->getEntityConverter()->setFieldValue($object, $field, $value);
+		$this->setFieldValue($object, $field, $value);
 	}
 
 	public function startFetchAll($offset = 0, $limit = 0, $filter_keys = array(), $filter_key_values = array())
