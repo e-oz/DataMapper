@@ -9,6 +9,6 @@ class KeyParserNotIN extends KeyParserIN
 
 	protected function getExpression($key, $value)
 	{
-		return $key.' NOT IN('.implode(',', $value).')';
+		return $key.' NOT IN('.implode(', ', $value).')';
 	}
 }

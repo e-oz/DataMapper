@@ -45,7 +45,7 @@ class PrepareValues implements IPrepareValues
 		{
 			if ($this->prefixed_statements[$key]!==$value)
 			{
-				$next_key                             = $this->getNextStatementKey($key);
+				$next_key                             = $this->getNextStatementKey($key, $value);
 				$this->prefixed_statements[$next_key] = $value;
 				return $next_key;
 			}
@@ -61,12 +61,14 @@ class PrepareValues implements IPrepareValues
 		}
 	}
 
-	protected function getNextStatementKey($key)
+	protected function getNextStatementKey($key, $value)
 	{
 		for ($i = 0; $i < 1000; $i++)
 		{
 			$next_key = $key.$this->statement_suffix.$i;
-			if (!isset($this->prefixed_statements[$next_key]))
+			if (!isset($this->prefixed_statements[$next_key])
+					|| $this->prefixed_statements[$next_key]===$value
+			)
 			{
 				return $next_key;
 			}

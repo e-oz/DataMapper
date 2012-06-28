@@ -20,11 +20,12 @@ class KeyParserIN implements IKeyParser
 		{
 			$value = $PrepareValues->getPreparedValue($parent_key, $value);
 		}
+		$parent_key = '`'.addslashes($parent_key).'`';
 		return $this->getExpression($parent_key, $value);
 	}
 
 	protected function getExpression($key, $value)
 	{
-		return $key.' IN('.implode(',', $value).')';
+		return $key.' IN('.implode(', ', $value).')';
 	}
 }

@@ -17,7 +17,7 @@ class KeyParserAND implements IKeyParser
 			{
 				$value = $PrepareValues->getPreparedValue($key, $value);
 			}
-			return $key.'='.$value;
+			return '`'.addslashes($key).'` = '.$value;
 		}
 		if (count($value) > 1)
 		{

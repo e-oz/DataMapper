@@ -17,24 +17,24 @@ class TestConverter extends \Jamm\Tester\ClassTest
 	{
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['$or'=> ['a'=> 1, 'b'=> 2]], $this->PrepareValues);
-		$this->assertEquals($SQL, '(a=:a OR b=:b)');
+		$this->assertEquals($SQL, '(`a` = :a OR `b` = :b)');
 		$this->assertEquals($this->PrepareValues->getStatements(), [':a'=> 1, ':b'=> 2]);
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['x'=> 5, '$or'=> ['y'=> 7, 'z'=> 10]]);
-		$this->assertEquals($SQL, 'x=5 AND (y=7 OR z=10)');
+		$this->assertEquals($SQL, '`x` = 5 AND (`y` = 7 OR `z` = 10)');
 	}
 
 	public function test_getSQLStringFromFilterArray_AND()
 	{
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['$and'=> ['x'=> 5, 'y'=> 10]], $this->PrepareValues);
-		$this->assertEquals($SQL, '(x=:x AND y=:y)');
+		$this->assertEquals($SQL, '(`x` = :x AND `y` = :y)');
 		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':y'=> 10]);
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['$and'=> ['x'  => 5,
 					   '$or'=> ['y'=> 7, 'z'=> 10]]
 			]);
-		$this->assertEquals($SQL, '(x=5 AND (y=7 OR z=10))');
+		$this->assertEquals($SQL, '(`x` = 5 AND (`y` = 7 OR `z` = 10))');
 	}
 
 	public function test_getSQLStringFromFilterArray_3args()
@@ -46,21 +46,21 @@ class TestConverter extends \Jamm\Tester\ClassTest
 					  '$and'=> ['d'=> 4, 'e'=> 5]],
 			 'f'  => 6
 			]);
-		$this->assertEquals($SQl, 'a=1 AND b=2 AND (c=3 OR (d=4 AND e=5)) AND f=6');
+		$this->assertEquals($SQl, '`a` = 1 AND `b` = 2 AND (`c` = 3 OR (`d` = 4 AND `e` = 5)) AND `f` = 6');
 	}
 
 	public function test_getSQLStringFromFilterArray_gt()
 	{
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['a'=> 1, 'x'=> ['$gt'=> 5]], $this->PrepareValues);
-		$this->assertEquals($SQL, 'a=:a AND x>:x');
+		$this->assertEquals($SQL, '`a` = :a AND `x` > :x');
 		$this->assertEquals($this->PrepareValues->getStatements(), [':a'=> 1, ':x'=> 5]);
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['z'  => ['$gt'=> 12],
 			 '$or'=> ['x'=> ['$gt' => 17],
 					  'y'=> ['$gt'=> 11]]]
 		);
-		$this->assertEquals($SQL, 'z>12 AND (x>17 OR y>11)');
+		$this->assertEquals($SQL, '`z` > 12 AND (`x` > 17 OR `y` > 11)');
 	}
 
 	public function test_getSQLStringFromFilterArray_lt()
@@ -73,7 +73,7 @@ class TestConverter extends \Jamm\Tester\ClassTest
 			 ]
 			], $this->PrepareValues
 		);
-		$this->assertEquals($SQL, 'x<:x AND (a<:a AND b>:b)');
+		$this->assertEquals($SQL, '`x` < :x AND (`a` < :a AND `b` > :b)');
 		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':a'=> 'b', ':b'=> 'a']);
 	}
 
@@ -84,13 +84,13 @@ class TestConverter extends \Jamm\Tester\ClassTest
 			 'y'=> ['$in'=> [1, 2, 3, 4, 5]]
 			]
 		);
-		$this->assertEquals($SQL, 'x>5 AND y IN(1,2,3,4,5)');
+		$this->assertEquals($SQL, '`x` > 5 AND `y` IN(1, 2, 3, 4, 5)');
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['x'=> ['$gt'=> 5],
-			 'y'=> ['$in'=> [1, 2, 3]]
+			 'y'=> ['$in'=> [1, 2, 3, 3]]
 			], $this->PrepareValues
 		);
-		$this->assertEquals($SQL, 'x>:x AND y IN(:y,:y_s0,:y_s1)');
+		$this->assertEquals($SQL, '`x` > :x AND `y` IN(:y, :y_s0, :y_s1, :y_s1)');
 		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':y'=> 1, ':y_s0'=> 2, ':y_s1'=> 3]);
 	}
 
@@ -101,7 +101,7 @@ class TestConverter extends \Jamm\Tester\ClassTest
 			 'y'=> ['$in'=> [4, 5]]
 			]
 		);
-		$this->assertEquals($SQL, 'x NOT IN(1,2,3) AND y IN(4,5)');
+		$this->assertEquals($SQL, '`x` NOT IN(1, 2, 3) AND `y` IN(4, 5)');
 	}
 
 	public function test_getSQLStringFromFilterArray_gte()
@@ -109,11 +109,11 @@ class TestConverter extends \Jamm\Tester\ClassTest
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['x'=> ['$gte'=> 5]]
 		);
-		$this->assertEquals($SQL, 'x>=5');
+		$this->assertEquals($SQL, '`x` >= 5');
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['x'=> ['$gte', 5]]
 		);
-		$this->assertTrue($SQL!=='x>=5')->addCommentary($SQL);
+		$this->assertTrue($SQL!=='`x` >= 5')->addCommentary($SQL);
 	}
 
 	public function test_getSQLStringFromFilterArray_lte()
@@ -123,11 +123,11 @@ class TestConverter extends \Jamm\Tester\ClassTest
 			 'z'=> ['$lte'=> 25]
 			]
 		);
-		$this->assertEquals($SQL, 'y=5 AND z<=25');
+		$this->assertEquals($SQL, '`y` = 5 AND `z` <= 25');
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['y'=> ['$lte', 118]]
 		);
-		$this->assertTrue($SQL!=='y<=118')->addCommentary($SQL);
+		$this->assertTrue($SQL!=='`y` <= 118')->addCommentary($SQL);
 	}
 
 	public function test_getSQLStringFromFilterArray_ne()
@@ -135,11 +135,11 @@ class TestConverter extends \Jamm\Tester\ClassTest
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['x'=> ['$ne'=> 18]]
 		);
-		$this->assertEquals($SQL, 'x!=18');
+		$this->assertEquals($SQL, '`x` != 18');
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			[0=> ['$ne'=> 18]]
 		);
-		$this->assertTrue($SQL!=='0!=18')->addCommentary($SQL);
+		$this->assertTrue($SQL!=='`0` != 18')->addCommentary($SQL);
 	}
 
 	public function test_getSQLStringFromFilterArray_and_with_array()
@@ -152,8 +152,8 @@ class TestConverter extends \Jamm\Tester\ClassTest
 				   ]
 		];
 		$SQL    = $this->Converter->getSQLStringFromFilterArray($filter);
-		$this->assertEquals($SQL, '((order_date_time>=1333224000) AND order_date_time<=1334087999 AND order_delivery_address_id IN(1,3,5))');
+		$this->assertEquals($SQL, '((`order_date_time` >= 1333224000) AND `order_date_time` <= 1334087999 AND `order_delivery_address_id` IN(1, 3, 5))');
 		$SQL = $this->Converter->getSQLStringFromFilterArray($filter, $this->PrepareValues);
-		$this->assertEquals($SQL, '((order_date_time>=:order_date_time) AND order_date_time<=:order_date_time_s0 AND order_delivery_address_id IN(:order_delivery_address_id,:order_delivery_address_id_s0,:order_delivery_address_id_s1))');
+		$this->assertEquals($SQL, '((`order_date_time` >= :order_date_time) AND `order_date_time` <= :order_date_time_s0 AND `order_delivery_address_id` IN(:order_delivery_address_id, :order_delivery_address_id_s0, :order_delivery_address_id_s1))');
 	}
 }

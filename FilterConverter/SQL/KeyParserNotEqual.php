@@ -9,6 +9,6 @@ class KeyParserNotEqual extends KeyParserGT
 
 	protected function getExpression($key, $value)
 	{
-		return $key.'!='.$value;
+		return $key.' != '.$value;
 	}
 }
