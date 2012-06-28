@@ -25,23 +25,53 @@ class PrepareValues implements IPrepareValues
 	{
 		if (!is_array($value))
 		{
-			$prefixed_key                             = $this->prefix.$key;
-			$this->prefixed_statements[$prefixed_key] = $value;
-			return $prefixed_key;
+			return $this->getKeyOfInsertedStatementPair($key, $value);
 		}
 		else
 		{
-			$i         = 1;
 			$new_value = array();
 			foreach ($value as $v)
 			{
-				$next_key                             = $this->prefix.$key.$this->statement_suffix.$i;
-				$this->prefixed_statements[$next_key] = $v;
-				$new_value[]                          = $next_key;
-				$i++;
+				$new_value[] = $this->getKeyOfInsertedStatementPair($key, $v);
 			}
 			return $new_value;
 		}
+	}
+
+	protected function getKeyOfInsertedStatementPair($key, $value)
+	{
+		$key = $this->prefix.$key;
+		if (isset($this->prefixed_statements[$key]))
+		{
+			if ($this->prefixed_statements[$key]!==$value)
+			{
+				$next_key                             = $this->getNextStatementKey($key);
+				$this->prefixed_statements[$next_key] = $value;
+				return $next_key;
+			}
+			else
+			{
+				return $key;
+			}
+		}
+		else
+		{
+			$this->prefixed_statements[$key] = $value;
+			return $key;
+		}
+	}
+
+	protected function getNextStatementKey($key)
+	{
+		for ($i = 0; $i < 1000; $i++)
+		{
+			$next_key = $key.$this->statement_suffix.$i;
+			if (!isset($this->prefixed_statements[$next_key]))
+			{
+				return $next_key;
+			}
+		}
+		return $key;
 	}
 
 	public function getStatementSuffix()

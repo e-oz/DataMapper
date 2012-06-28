@@ -90,8 +90,8 @@ class TestConverter extends \Jamm\Tester\ClassTest
 			 'y'=> ['$in'=> [1, 2, 3]]
 			], $this->PrepareValues
 		);
-		$this->assertEquals($SQL, 'x>:x AND y IN(:y_s1,:y_s2,:y_s3)');
-		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':y_s1'=> 1, ':y_s2'=> 2, ':y_s3'=> 3]);
+		$this->assertEquals($SQL, 'x>:x AND y IN(:y,:y_s0,:y_s1)');
+		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':y'=> 1, ':y_s0'=> 2, ':y_s1'=> 3]);
 	}
 
 	public function test_getSQLStringFromFilterArray_nin()
@@ -140,5 +140,20 @@ class TestConverter extends \Jamm\Tester\ClassTest
 			[0=> ['$ne'=> 18]]
 		);
 		$this->assertTrue($SQL!=='0!=18')->addCommentary($SQL);
+	}
+
+	public function test_getSQLStringFromFilterArray_and_with_array()
+	{
+		$filter = ['$and'=>
+				   [
+					   ['order_date_time'=> ['$gte'=> 1333224000]],
+					   ['order_date_time'=> ['$lte'=> 1334087999]],
+					   ['order_delivery_address_id'=> ['$in'=> [1, 3, 5]]]
+				   ]
+		];
+		$SQL    = $this->Converter->getSQLStringFromFilterArray($filter);
+		$this->assertEquals($SQL, '((order_date_time>=1333224000) AND order_date_time<=1334087999 AND order_delivery_address_id IN(1,3,5))');
+		$SQL = $this->Converter->getSQLStringFromFilterArray($filter, $this->PrepareValues);
+		$this->assertEquals($SQL, '((order_date_time>=:order_date_time) AND order_date_time<=:order_date_time_s0 AND order_delivery_address_id IN(:order_delivery_address_id,:order_delivery_address_id_s0,:order_delivery_address_id_s1))');
 	}
 }

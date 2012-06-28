@@ -70,7 +70,7 @@ class Converter
 		$i            = 0;
 		foreach ($value as $k=> $v)
 		{
-			if ($k===$i)
+			if ($k===$i && !is_array($v))
 			{
 				$parsed_value[] = $v;
 			}
