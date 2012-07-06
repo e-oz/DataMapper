@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 class EntityCodeGenerator
 {
 	use CamelCase;
@@ -15,7 +14,6 @@ class EntityCodeGenerator
 			trigger_error('Set fields first', E_USER_WARNING);
 			return false;
 		}
-
 		if (!empty($parent_class_name))
 		{
 			if (class_exists($parent_class_name))
@@ -27,7 +25,6 @@ class EntityCodeGenerator
 				$parent_class_name = '';
 			}
 		}
-
 		$code = $this->getClassDeclarationCode($Table, $namespace, $parent_class_name);
 		if (!empty($fields))
 		{

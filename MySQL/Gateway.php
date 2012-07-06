@@ -208,24 +208,45 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$SQL .= " FROM `{$this->table_name}`";
 		if (!empty($filter_key_values))
 		{
-			$SQL .= ' WHERE '.$this->getWhereStringValue($filter_key_values, $statements);
+			$where_string = $this->getWhereStringValue($filter_key_values, $statements);
+			if (!empty($where_string)) $SQL .= ' WHERE '.$where_string;
 		}
 		if ($offset!=0 || $limit!=0)
 		{
 			$SQL .= " LIMIT ".intval($offset).", ".intval($limit);
 		}
+		$SQL = $this->getCorrectPreparedQuery($SQL, $statements);
 		if (!($query = $this->pdo->prepare($SQL)))
 		{
-			trigger_error($SQL, E_USER_WARNING);
+			trigger_error("Can't prepare ".$SQL, E_USER_WARNING);
 			return false;
 		}
 		if (!$query->execute($statements))
 		{
-			trigger_error($SQL, E_USER_WARNING);
+			trigger_error("Can't execute $SQL", E_USER_WARNING);
 			return false;
 		}
 		$this->setFetchingQuery($query);
 		return true;
+	}
+
+	protected function getCorrectPreparedQuery($query, &$statements)
+	{
+		$num_replacements = $statements;
+		foreach ($statements as $key=> $statement)
+		{
+			if (is_numeric($statement))
+			{
+				$num_replacements[$key] = floatval($statement);
+				unset($statements[$key]);
+			}
+			else
+			{
+				$num_replacements[$key] = $key;
+			}
+		}
+		$query = strtr($query, $num_replacements);
+		return $query;
 	}
 
 	protected function setFetchingQuery(\PDOStatement $FetchingQuery)
@@ -244,7 +265,8 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	public function fetchNext()
 	{
 		if (empty($this->fetching_query)) $this->startFetchAll();
-		return $this->fetching_query->fetch(\PDO::FETCH_ASSOC);
+		$result = $this->fetching_query->fetch(\PDO::FETCH_ASSOC);
+		return $result;
 	}
 
 	public function truncateTable()
@@ -266,6 +288,11 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		$PrepareValues->setPrefix($this->pdo_prep_prefix);
 		$where_string = $FilterConverter->getSQLStringFromFilterArray($filter_key_values_array, $PrepareValues);
 		$statements   = $PrepareValues->getStatements();
+		if (empty($where_string))
+		{
+			trigger_error('Filter parsing error', E_USER_WARNING);
+			return false;
+		}
 		return $where_string;
 	}
 
