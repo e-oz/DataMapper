@@ -4,14 +4,15 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 {
 	/** @var \PDO */
 	protected $pdo;
-	protected $pdo_prep_prefix = ':';
 	protected $table_name;
-	protected $prepared_setting;
-	protected $prepared_values;
 	/** @var \PDOStatement */
 	protected $fetching_query;
 	/** @var \Jamm\DataMapper\IMetaTable */
 	protected $Table;
+	/** @var \Jamm\DataMapper\IField[] */
+	private $WritableFields;
+	protected $concatenation_string = ' , ';
+	private $prepared_queries;
 
 	public function __construct(\Jamm\DataMapper\IMetaTable $Table, \PDO $PDO_connection)
 	{
@@ -31,20 +32,18 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			trigger_error('Primary field in table '.$this->table_name.' is empty', E_USER_WARNING);
 			return false;
 		}
-		$query = $this->pdo->prepare("SELECT * FROM `{$this->table_name}` WHERE `$primary_key`=:ID LIMIT 0,1");
-		if (!$query) return false;
-		if (!$query->execute(array(':ID' => $id))) return false;
+		$query = $this->prepareWithCache("SELECT * FROM `{$this->table_name}` WHERE `$primary_key`=:ID LIMIT 0,1");
+		if (!$query)
+		{
+			trigger_error("Can't prepare {$query->queryString}", E_USER_WARNING);
+			return false;
+		}
+		if (!$query->execute(array(':ID' => $id)))
+		{
+			trigger_error("Can't execute {$query->queryString}", E_USER_WARNING);
+			return false;
+		}
 		return $query->fetch(\PDO::FETCH_ASSOC);
-	}
-
-	public function getTable()
-	{
-		return $this->Table;
-	}
-
-	public function setTable(\Jamm\DataMapper\IMetaTable $MetaTable)
-	{
-		$this->Table = $MetaTable;
 	}
 
 	public function update($values)
@@ -54,38 +53,44 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			trigger_error('Records can be updated only using primary key.', E_USER_WARNING);
 			return false;
 		}
-		$this->setPreparedBindings($values);
-		$setting = $this->prepared_setting;
+		$this->setPreparedBindings($values, $setting, $statements);
 		if (empty($setting))
 		{
 			return false;
 		}
-		$query = $this->pdo->prepare("UPDATE `{$this->table_name}` SET $setting WHERE `$primary_key`=".$this->pdo_prep_prefix.$primary_key);
+		$id_key = ':'.$primary_key;
+		$query  = $this->prepareWithCache("UPDATE `{$this->table_name}` SET $setting WHERE `$primary_key`=".$id_key);
 		if (!$query) return false;
-		$this->prepared_values[$this->pdo_prep_prefix.$primary_key] = $values[$primary_key];
-		$result                                                     = $query->execute($this->prepared_values);
+		$statements[$id_key] = $values[$primary_key];
+		$result              = $query->execute($statements);
 		return $result;
 	}
 
-	protected function setPreparedBindings($values, $concatenation_string = ' , ')
+	protected function setPreparedBindings($values, &$setting, &$statements)
 	{
-		$this->prepared_setting = NULL;
-		$this->prepared_values  = NULL;
-		$fields                 = $this->Table->getWritableFields();
+		$fields = $this->getWritableFields();
 		if (empty($fields)) return false;
-		$params   = array();
-		$settings = array();
+		$statements = array();
+		$settings   = array();
 		foreach ($fields as $Field)
 		{
 			$name = $Field->getName();
 			if (!array_key_exists($name, $values)) continue;
 			if (!$Field->isValueAcceptable($values[$name])) continue;
-			$settings[]                           = '`'.$name.'`= '.$this->pdo_prep_prefix.$name;
-			$params[$this->pdo_prep_prefix.$name] = $values[$name];
+			$settings[]            = '`'.$name.'`= :'.$name;
+			$statements[':'.$name] = $values[$name];
 		}
-		$this->prepared_setting = implode($concatenation_string, $settings);
-		$this->prepared_values  = $params;
+		$setting = implode($this->concatenation_string, $settings);
 		return true;
+	}
+
+	protected function getWritableFields()
+	{
+		if (empty($this->WritableFields))
+		{
+			$this->WritableFields = $this->Table->getWritableFields();
+		}
+		return $this->WritableFields;
 	}
 
 	protected function generateUniqueKey(\Jamm\DataMapper\IField $Field)
@@ -107,30 +112,24 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		return false;
 	}
 
-	protected function getWritableFieldsArray()
-	{
-		return $this->Table->getNamesOfFields($this->Table->getWritableFields());
-	}
-
 	/**
 	 * @param $values
 	 * @return bool|string true, false, or last inserted ID
 	 */
 	public function insert($values = array())
 	{
-		$this->prepareUniqKeys($values);
-		$this->setPreparedBindings($values);
-		$setting = $this->prepared_setting;
+		$this->setUniqueValues($values);
+		$this->setPreparedBindings($values, $setting, $statements);
 		if (!empty($setting))
 		{
-			$query = $this->pdo->prepare("INSERT INTO `{$this->table_name}` SET $setting");
+			$query = $this->prepareWithCache("INSERT INTO `{$this->table_name}` SET $setting");
 		}
 		else
 		{
-			$query = $this->pdo->prepare("INSERT INTO `{$this->table_name}` () VALUES()");
+			$query = $this->prepareWithCache("INSERT INTO `{$this->table_name}` () VALUES()");
 		}
 		if (!$query) return false;
-		$result = $query->execute($this->prepared_values);
+		$result = $query->execute($statements);
 		if (!$result) return false;
 		$id_field = $this->Table->getPrimaryFieldName();
 		if (!empty($id_field))
@@ -147,7 +146,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		return $result;
 	}
 
-	protected function prepareUniqKeys(&$values)
+	protected function setUniqueValues(&$values)
 	{
 		$fields = $this->Table->getWritableFields();
 		if (empty($fields)) return false;
@@ -172,7 +171,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			trigger_error('Can not delete without primary field', E_USER_WARNING);
 			return false;
 		}
-		$query = $this->pdo->prepare("DELETE FROM `{$this->table_name}` WHERE `$primary_field_name`=:ID LIMIT 1");
+		$query = $this->prepareWithCache("DELETE FROM `{$this->table_name}` WHERE `$primary_field_name`=:ID LIMIT 1");
 		if (!$query) return false;
 		if (!$query->execute(array(':ID' => $id))) return false;
 		return true;
@@ -216,7 +215,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			$SQL .= " LIMIT ".intval($offset).", ".intval($limit);
 		}
 		$SQL = $this->getCorrectPreparedQuery($SQL, $statements);
-		if (!($query = $this->pdo->prepare($SQL)))
+		if (!($query = $this->prepareWithCache($SQL)))
 		{
 			trigger_error("Can't prepare ".$SQL, E_USER_WARNING);
 			return false;
@@ -285,15 +284,28 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		$FilterConverter = $this->getNewFilterConverter();
 		$PrepareValues   = $this->getNewPrepareValues();
-		$PrepareValues->setPrefix($this->pdo_prep_prefix);
-		$where_string = $FilterConverter->getSQLStringFromFilterArray($filter_key_values_array, $PrepareValues);
-		$statements   = $PrepareValues->getStatements();
+		$where_string    = $FilterConverter->getSQLStringFromFilterArray($filter_key_values_array, $PrepareValues);
+		$statements      = $PrepareValues->getStatements();
 		if (empty($where_string))
 		{
 			trigger_error('Filter parsing error', E_USER_WARNING);
 			return false;
 		}
 		return $where_string;
+	}
+
+	/**
+	 * @param $SQL
+	 * @return \PDOStatement
+	 */
+	protected function prepareWithCache($SQL)
+	{
+		$key = md5($SQL);
+		if (!isset($this->prepared_queries[$key]))
+		{
+			$this->prepared_queries[$key] = $this->pdo->prepare($SQL);
+		}
+		return $this->prepared_queries[$key];
 	}
 
 	protected function getNewFilterConverter()
