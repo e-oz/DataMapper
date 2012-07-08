@@ -90,8 +90,8 @@ class TestConverter extends \Jamm\Tester\ClassTest
 			 'y'=> ['$in'=> [1, 2, 3, 3]]
 			], $this->PrepareValues
 		);
-		$this->assertEquals($SQL, '`x` > :x AND `y` IN(:y, :y_s0, :y_s1, :y_s1)');
-		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':y'=> 1, ':y_s0'=> 2, ':y_s1'=> 3]);
+		$this->assertEquals($SQL, '`x` > :x AND `y` IN(:y, :y_s0, :y_s1, :y_s2)');
+		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':y'=> 1, ':y_s0'=> 2, ':y_s1'=> 3, ':y_s2'=> 3]);
 	}
 
 	public function test_getSQLStringFromFilterArray_nin()

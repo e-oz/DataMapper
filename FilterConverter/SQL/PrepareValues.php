@@ -2,19 +2,8 @@
 namespace Jamm\DataMapper\FilterConverter\SQL;
 class PrepareValues implements IPrepareValues
 {
-	private $prefix = ':';
 	private $prefixed_statements = array();
 	private $statement_suffix = '_s';
-
-	public function setPrefix($prefix)
-	{
-		return $this->prefix = $prefix;
-	}
-
-	public function getPrefix()
-	{
-		return $this->prefix;
-	}
 
 	public function getStatements()
 	{
@@ -40,19 +29,12 @@ class PrepareValues implements IPrepareValues
 
 	protected function getKeyOfInsertedStatementPair($key, $value)
 	{
-		$key = $this->prefix.$key;
+		$key = ':'.$key;
 		if (isset($this->prefixed_statements[$key]))
 		{
-			if ($this->prefixed_statements[$key]!==$value)
-			{
-				$next_key                             = $this->getNextStatementKey($key, $value);
-				$this->prefixed_statements[$next_key] = $value;
-				return $next_key;
-			}
-			else
-			{
-				return $key;
-			}
+			$next_key                             = $this->getNextStatementKey($key);
+			$this->prefixed_statements[$next_key] = $value;
+			return $next_key;
 		}
 		else
 		{
@@ -61,14 +43,12 @@ class PrepareValues implements IPrepareValues
 		}
 	}
 
-	protected function getNextStatementKey($key, $value)
+	protected function getNextStatementKey($key)
 	{
 		for ($i = 0; $i < 1000; $i++)
 		{
 			$next_key = $key.$this->statement_suffix.$i;
-			if (!isset($this->prefixed_statements[$next_key])
-					|| $this->prefixed_statements[$next_key]===$value
-			)
+			if (!isset($this->prefixed_statements[$next_key]))
 			{
 				return $next_key;
 			}

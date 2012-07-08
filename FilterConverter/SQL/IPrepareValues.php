@@ -2,10 +2,6 @@
 namespace Jamm\DataMapper\FilterConverter\SQL;
 interface IPrepareValues
 {
-	public function setPrefix($prefix);
-
-	public function getPrefix();
-
 	public function getStatements();
 
 	public function getPreparedValue($key, $value);
