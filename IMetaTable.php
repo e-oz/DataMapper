@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 interface IMetaTable
 {
 	/** @return string */

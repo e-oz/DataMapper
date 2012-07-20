@@ -12,6 +12,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	/** @var \Jamm\DataMapper\IField[] */
 	private $WritableFields;
 	protected $concatenation_string = ' , ';
+	/** @var \PDOStatement[] */
 	private $prepared_queries;
 
 	public function __construct(\Jamm\DataMapper\IMetaTable $Table, \PDO $PDO_connection)
@@ -58,20 +59,21 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		{
 			return false;
 		}
-		$id_key = ':'.$primary_key;
-		$query  = $this->prepareWithCache("UPDATE `{$this->table_name}` SET $setting WHERE `$primary_key`=".$id_key);
+		$query = $this->prepareWithCache("UPDATE `{$this->table_name}` SET $setting WHERE `$primary_key`= :".$primary_key);
 		if (!$query) return false;
-		$statements[$id_key] = $values[$primary_key];
-		$result              = $query->execute($statements);
+		$statements[':'.$primary_key] = $values[$primary_key];
+		$result                       = $query->execute($statements);
 		return $result;
 	}
 
 	protected function setPreparedBindings($values, &$setting, &$statements)
 	{
-		$fields = $this->getWritableFields();
-		if (empty($fields)) return false;
 		$statements = array();
 		$settings   = array();
+		$setting    = '';
+		if (empty($values)) return false;
+		$fields = $this->getWritableFields();
+		if (empty($fields)) return false;
 		foreach ($fields as $Field)
 		{
 			$name = $Field->getName();
@@ -123,13 +125,13 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		if (!empty($setting))
 		{
 			$query = $this->prepareWithCache("INSERT INTO `{$this->table_name}` SET $setting");
+			if (!$query) return false;
+			$result = $query->execute($statements);
 		}
 		else
 		{
-			$query = $this->prepareWithCache("INSERT INTO `{$this->table_name}` () VALUES()");
+			$result = $this->pdo->query("INSERT INTO `{$this->table_name}` () VALUES()");
 		}
-		if (!$query) return false;
-		$result = $query->execute($statements);
 		if (!$result) return false;
 		$id_field = $this->Table->getPrimaryFieldName();
 		if (!empty($id_field))
@@ -214,16 +216,26 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		{
 			$SQL .= " LIMIT ".intval($offset).", ".intval($limit);
 		}
-		$SQL = $this->getCorrectPreparedQuery($SQL, $statements);
-		if (!($query = $this->prepareWithCache($SQL)))
+		if (!empty($statements))
 		{
-			trigger_error("Can't prepare ".$SQL, E_USER_WARNING);
-			return false;
+			$SQL = $this->getCorrectPreparedQuery($SQL, $statements);
 		}
-		if (!$query->execute($statements))
+		if (!empty($statements))
 		{
-			trigger_error("Can't execute $SQL", E_USER_WARNING);
-			return false;
+			if (!($query = $this->prepareWithCache($SQL)))
+			{
+				trigger_error("Can't prepare ".$SQL, E_USER_WARNING);
+				return false;
+			}
+			if (!$query->execute($statements))
+			{
+				trigger_error("Can't execute $SQL", E_USER_WARNING);
+				return false;
+			}
+		}
+		else
+		{
+			$query = $this->pdo->query($SQL);
 		}
 		$this->setFetchingQuery($query);
 		return true;
@@ -250,11 +262,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 
 	protected function setFetchingQuery(\PDOStatement $FetchingQuery)
 	{
-		if (!empty($this->fetching_query))
-		{
-			$this->fetching_query->closeCursor();
-			unset($this->fetching_query);
-		}
 		$this->fetching_query = $FetchingQuery;
 	}
 

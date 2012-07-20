@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 class Field implements IField
 {
 	private $name;

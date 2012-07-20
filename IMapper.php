@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 interface IMapper
 {
 	public function insert($object = null);

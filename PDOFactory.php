@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 class PDOFactory implements IPDOFactory
 {
 	/** @var \PDO */

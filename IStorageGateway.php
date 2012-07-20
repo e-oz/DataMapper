@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 interface IStorageGateway
 {
 	/**

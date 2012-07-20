@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 trait CamelCase
 {
 	public function inCamelCase($string)

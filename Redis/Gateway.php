@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper\Redis;
-
 class Gateway implements \Jamm\DataMapper\IStorageGateway
 {
 	protected $redis;
@@ -39,7 +38,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		if (!empty($tables_data))
 		{
 			$tables = unserialize($tables_data);
-
 			if (!in_array($name, $tables))
 			{
 				$tables[] = $name;
@@ -80,7 +78,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		{
 			$id = $this->autoIncrementValue($this->internal_index_field);
 		}
-
 		if (empty($id))
 		{
 			trigger_error("ID not generated", E_USER_WARNING);
@@ -294,7 +291,6 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 	{
 		$fields = $this->Table->getFields();
 		if (empty($fields)) return false;
-
 		foreach ($fields as $Field)
 		{
 			$name = $Field->getName();
@@ -319,14 +315,12 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		{
 			trigger_error('Empty field name');
 		}
-
 		do
 		{
 			$unique_key = $Field->getRandomKeyGenerator()->getKey();
 			$check      = $this->addUniqueKey($name, $unique_key);
 			if (empty($check)) return $unique_key;
-		}
-		while (!empty($unique_key));
+		} while (!empty($unique_key));
 		return false;
 	}
 

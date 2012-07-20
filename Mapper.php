@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 class Mapper implements IMapper
 {
 	use \Jamm\DataMapper\EntityConverter;
@@ -26,7 +25,7 @@ class Mapper implements IMapper
 		if (is_object($object)) $values = $this->mapToArray($object);
 		else $values = array();
 		$result = $this->storage_gateway->insert($values);
-		if (!empty($result))
+		if (!empty($result) && !empty($object))
 		{
 			$primary_field = $this->storage_gateway->getPrimaryField();
 			if (!empty($primary_field))

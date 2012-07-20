@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 abstract class EntityFactory implements IEntityFactory
 {
 	use \Jamm\DataMapper\EntityConverter;

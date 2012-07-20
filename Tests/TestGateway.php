@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper\Tests;
-
 class TestGateway extends \Jamm\Tester\ClassTest
 {
 	private $Gateway;
@@ -24,7 +23,7 @@ class TestGateway extends \Jamm\Tester\ClassTest
 		$this->values_for_types['INT']       = 5;
 		$this->values_for_types['SERIAL']    = 6;
 		$this->values_for_types['NUMERIC']   = 5;
-		$this->values_for_types['DECIMAL']   = 5.0;
+		$this->values_for_types['DECIMAL']   = 5.005;
 		$this->values_for_types['DEC']       = 5.0;
 		$this->values_for_types['FLOAT']     = 5.5;
 		$this->values_for_types['DOUBLE']    = 5.55;
@@ -37,7 +36,7 @@ class TestGateway extends \Jamm\Tester\ClassTest
 		$this->values_for_types['SET']       = 'Set1';
 		$this->values_for_types['DATE']      = date('Y-m-d');
 		$this->values_for_types['DATETIME']  = date('Y-m-d H:i:s');
-		$this->values_for_types['TIMESTAMP'] = time();
+		$this->values_for_types['TIMESTAMP'] = date('Y-m-d H:i:s', time());
 		$this->default_type_value            = '1default1';
 	}
 
@@ -48,7 +47,7 @@ class TestGateway extends \Jamm\Tester\ClassTest
 		$this->values_for_types['INT']       = 10;
 		$this->values_for_types['SERIAL']    = 11;
 		$this->values_for_types['NUMERIC']   = 10;
-		$this->values_for_types['DECIMAL']   = 10.0;
+		$this->values_for_types['DECIMAL']   = 10.005;
 		$this->values_for_types['DEC']       = 10.0;
 		$this->values_for_types['FLOAT']     = 10.5;
 		$this->values_for_types['DOUBLE']    = 15.55;
@@ -61,7 +60,7 @@ class TestGateway extends \Jamm\Tester\ClassTest
 		$this->values_for_types['SET']       = 'Set2';
 		$this->values_for_types['DATE']      = date('Y-m-d', time()+86401);
 		$this->values_for_types['DATETIME']  = date('Y-m-d H:i:s', time()+10);
-		$this->values_for_types['TIMESTAMP'] = time()+11;
+		$this->values_for_types['TIMESTAMP'] = date('Y-m-d H:i:s', time()+11);
 		$this->default_type_value            = '2default2';
 	}
 
@@ -101,7 +100,6 @@ class TestGateway extends \Jamm\Tester\ClassTest
 	public function testInsert()
 	{
 		if ($this->inserted) return true;
-
 		$id_field = $this->MetaTable->getPrimaryFieldName();
 		$data     = array($id_field => 0);
 		$this->fillDataArrayByFieldsTypes($data, $this->MetaTable->getWritableFields());
@@ -118,6 +116,7 @@ class TestGateway extends \Jamm\Tester\ClassTest
 		if (!$this->inserted) $this->testInsert();
 		$data = $this->Gateway->fetchByID($this->inserted_id);
 		$this->assertIsArray($data);
+		$this->assertEquals(array_keys($data), $this->getKeysList());
 	}
 
 	public function testFetchNext()
@@ -142,7 +141,6 @@ class TestGateway extends \Jamm\Tester\ClassTest
 	public function testUpdate()
 	{
 		if (!$this->inserted) $this->testInsert();
-
 		$data = $this->Gateway->fetchByID($this->inserted_id);
 		$this->updateValuesForTypes();
 		$this->fillDataArrayByFieldsTypes($data, $this->MetaTable->getWritableFields());
@@ -191,5 +189,10 @@ class TestGateway extends \Jamm\Tester\ClassTest
 	protected function getMetaTable()
 	{
 		return $this->MetaTable;
+	}
+
+	private function getKeysList()
+	{
+		return $this->MetaTable->getNamesOfFields($this->MetaTable->getFields());
 	}
 }

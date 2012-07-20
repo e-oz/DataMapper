@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper\Tests;
-
 class MockMetaTable extends \Jamm\DataMapper\MetaTable
 {
 	public function __construct()

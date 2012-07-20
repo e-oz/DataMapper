@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 interface IField
 {
 	public function setAutoincrement($autoincrement = true);

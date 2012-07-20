@@ -1,6 +1,5 @@
 <?php
 namespace Jamm\DataMapper;
-
 class MetaTable implements IMetaTable
 {
 	private $name;
