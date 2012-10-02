@@ -229,13 +229,18 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 			}
 			if (!$query->execute($statements))
 			{
-				trigger_error("Can't execute $SQL", E_USER_WARNING);
+				trigger_error("Can't execute $SQL".PHP_EOL.'statements: '.print_r($statements, 1), E_USER_WARNING);
 				return false;
 			}
 		}
 		else
 		{
 			$query = $this->pdo->query($SQL);
+			if (!$query)
+			{
+				trigger_error("Error in query $SQL", E_USER_WARNING);
+				return false;
+			}
 		}
 		$this->setFetchingQuery($query);
 		return true;
@@ -287,7 +292,7 @@ class Gateway implements \Jamm\DataMapper\IStorageGateway
 		return $this->Table->getName();
 	}
 
-	private function getWhereStringValue($filter_key_values_array, &$statements)
+	protected function getWhereStringValue($filter_key_values_array, &$statements)
 	{
 		$FilterConverter = $this->getNewFilterConverter();
 		$PrepareValues   = $this->getNewPrepareValues();

@@ -16,9 +16,20 @@ class KeyParserIN implements IKeyParser
 			trigger_error('Wrong filter syntax', E_USER_NOTICE);
 			return false;
 		}
+		$value = array_values($value);
 		if (!empty($PrepareValues))
 		{
 			$value = $PrepareValues->getPreparedValue($parent_key, $value);
+		}
+		else
+		{
+			foreach ($value as $k=> $v)
+			{
+				if (!is_numeric($v))
+				{
+					$value[$k] = "'$v'";
+				}
+			}
 		}
 		$parent_key = '`'.addslashes($parent_key).'`';
 		return $this->getExpression($parent_key, $value);

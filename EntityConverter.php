@@ -74,6 +74,17 @@ trait EntityConverter
 		return $result_array;
 	}
 
+	public function mapObjectsArrayToArray(array $objects)
+	{
+		$array = [];
+		if (empty($objects)) return [];
+		foreach ($objects as $object)
+		{
+			$array[] = $this->mapObjectToArray($object);
+		}
+		return $array;
+	}
+
 	public function setFieldValue($object, $field, $value)
 	{
 		try

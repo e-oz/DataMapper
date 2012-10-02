@@ -23,6 +23,7 @@ class Converter
 		$this->key_parsers[]      = new KeyParserIN();
 		$this->key_parsers[]      = new KeyParserNotIN();
 		$this->key_parsers[]      = new KeyParserNotEqual();
+        $this->key_parsers[]      = new KeyParserREGEX();
 	}
 
 	/**
@@ -42,6 +43,10 @@ class Converter
 		$SQL_lines = array();
 		foreach ($filter_array as $key=> $value)
 		{
+			if (!$this->isFilteredKey($key))
+			{
+				continue;
+			}
 			$SQL_lines[] = $this->getStringForKeyValue($key, $value, '', $PrepareValues);
 		}
 		return implode(' AND ', $SQL_lines);
@@ -49,6 +54,10 @@ class Converter
 
 	protected function getStringForKeyValue($key, $value, $parent_key, IPrepareValues $PrepareValues = NULL)
 	{
+		if (!$this->isFilteredKey($key))
+		{
+			return false;
+		}
 		$KeyParser = $this->getKeyParser($key);
 		if (empty($KeyParser))
 		{
@@ -60,7 +69,7 @@ class Converter
 		return $SQL;
 	}
 
-	protected function getParsedValue($value, $parent_key, $PrepareValues = NULL)
+	protected function getParsedValue($value, $parent_key, IPrepareValues $PrepareValues = NULL)
 	{
 		if (!is_array($value))
 		{
@@ -76,6 +85,10 @@ class Converter
 			}
 			else
 			{
+				if (!$this->isFilteredKey($k))
+				{
+					continue;
+				}
 				$parsed_value[] = $this->getStringForKeyValue($k, $v, $parent_key, $PrepareValues);
 			}
 			$i++;
@@ -97,5 +110,12 @@ class Converter
 			}
 		}
 		return $this->key_parser_default;
+	}
+
+	protected function isFilteredKey($key)
+	{
+		if (!is_scalar($key)) return true;
+		$filtered_key = preg_replace('/[^a-zA-Z0-9_\$]/', '', $key);
+		return $filtered_key===((string)$key);
 	}
 }

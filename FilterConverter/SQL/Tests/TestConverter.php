@@ -13,6 +13,17 @@ class TestConverter extends \Jamm\Tester\ClassTest
 		$this->PrepareValues = new \Jamm\DataMapper\FilterConverter\SQL\PrepareValues();
 	}
 
+	public function test_in()
+	{
+		$assoc_arr = [0=> 1, 3=> 2, 4=> 'test test'];
+		$SQL       = $this->Converter->getSQLStringFromFilterArray(['id'=> ['$in'=> $assoc_arr]], $this->PrepareValues);
+		$this->assertEquals($SQL, '`id` IN(:id, :id_s0, :id_s1)');
+		$this->assertEquals($this->PrepareValues->getStatements(),
+			[':id'   => 1,
+			 ':id_s0'=> 2,
+			 ':id_s1'=> 'test test']);
+	}
+
 	public function test_getSQLStringFromFilterArray_OR()
 	{
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
@@ -87,11 +98,11 @@ class TestConverter extends \Jamm\Tester\ClassTest
 		$this->assertEquals($SQL, '`x` > 5 AND `y` IN(1, 2, 3, 4, 5)');
 		$SQL = $this->Converter->getSQLStringFromFilterArray(
 			['x'=> ['$gt'=> 5],
-			 'y'=> ['$in'=> [1, 2, 3, 3]]
+			 'y'=> ['$in'=> [1, 2, 3, 'test test']]
 			], $this->PrepareValues
 		);
 		$this->assertEquals($SQL, '`x` > :x AND `y` IN(:y, :y_s0, :y_s1, :y_s2)');
-		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':y'=> 1, ':y_s0'=> 2, ':y_s1'=> 3, ':y_s2'=> 3]);
+		$this->assertEquals($this->PrepareValues->getStatements(), [':x'=> 5, ':y'=> 1, ':y_s0'=> 2, ':y_s1'=> 3, ':y_s2'=> 'test test']);
 	}
 
 	public function test_getSQLStringFromFilterArray_nin()
@@ -156,4 +167,26 @@ class TestConverter extends \Jamm\Tester\ClassTest
 		$SQL = $this->Converter->getSQLStringFromFilterArray($filter, $this->PrepareValues);
 		$this->assertEquals($SQL, '((`order_date_time` >= :order_date_time) AND `order_date_time` <= :order_date_time_s0 AND `order_delivery_address_id` IN(:order_delivery_address_id, :order_delivery_address_id_s0, :order_delivery_address_id_s1))');
 	}
+
+	public function test_WrongKey()
+	{
+		$result = $this->Converter->getSQLStringFromFilterArray(['t x ='=> 1], $this->PrepareValues);
+		$this->assertEquals($result, '');
+		$result = $this->Converter->getSQLStringFromFilterArray(
+			['id' => ['tester testovyj', 2, 3]], $this->PrepareValues);
+		$this->assertEquals($result, '');
+		$filter = ['order_date_time'=> ['$ lte'=> 1334087999]];
+		$SQL    = $this->Converter->getSQLStringFromFilterArray($filter);
+		$this->assertEquals($SQL, '');
+	}
+
+    public function test_getSQLStringFromFilterArray_regex()
+   	{
+   		$SQL = $this->Converter->getSQLStringFromFilterArray(
+   			[
+                   'x'=> ['$regex'=> ':x'],
+   			]
+   		);
+   		$this->assertEquals($SQL, '`x` REGEXP :x');
+   	}
 }

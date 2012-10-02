@@ -2,7 +2,7 @@
 namespace Jamm\DataMapper;
 class RandomKeyGenerator implements IRandomKeyGenerator
 {
-	private $symbols = 'QWERTYUIOPASDFGHJKLZXCVBNM1234567890';
+	private $symbols = 'qwertyuiopasdfghjklzxcvbnm1234567890';
 	private $key_length = 32;
 
 	public function getKey()

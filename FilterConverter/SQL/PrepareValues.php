@@ -12,6 +12,10 @@ class PrepareValues implements IPrepareValues
 
 	public function getPreparedValue($key, $value)
 	{
+		if (!$this->isFilteredKey($key))
+		{
+			return false;
+		}
 		if (!is_array($value))
 		{
 			return $this->getKeyOfInsertedStatementPair($key, $value);
@@ -29,6 +33,14 @@ class PrepareValues implements IPrepareValues
 
 	protected function getKeyOfInsertedStatementPair($key, $value)
 	{
+		if (!$this->isFilteredKey($key))
+		{
+			return false;
+		}
+		if (is_numeric($key))
+		{
+			return false;
+		}
 		$key = ':'.$key;
 		if (isset($this->prefixed_statements[$key]))
 		{
@@ -64,5 +76,12 @@ class PrepareValues implements IPrepareValues
 	public function setStatementSuffix($statement_suffix)
 	{
 		$this->statement_suffix = $statement_suffix;
+	}
+
+	protected function isFilteredKey($key)
+	{
+		if (!is_scalar($key)) return true;
+		$filtered_key = preg_replace('/[^a-zA-Z0-9_\$]/', '', $key);
+		return $filtered_key===((string)$key);
 	}
 }

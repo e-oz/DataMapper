@@ -15,13 +15,29 @@ class KeyParserAND implements IKeyParser
 		{
 			if (!empty($PrepareValues))
 			{
-				$value = $PrepareValues->getPreparedValue($key, $value);
+				$prepared_value = $PrepareValues->getPreparedValue($key, $value);
+				if ($prepared_value===false)
+				{
+					return $value;
+				}
+				$value = $prepared_value;
+			}
+			elseif (!is_numeric($value))
+			{
+				$value = "'$value'";
 			}
 			return '`'.addslashes($key).'` = '.$value;
 		}
 		if (count($value) > 1)
 		{
-			return '('.implode(' AND ', $value).')';
+			if ($key!==$this->key)
+			{
+				return false;
+			}
+			else
+			{
+				return '('.implode(' AND ', $value).')';
+			}
 		}
 		else
 		{

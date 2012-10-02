@@ -20,6 +20,10 @@ class KeyParserGT implements IKeyParser
 		{
 			$value = $PrepareValues->getPreparedValue($parent_key, $value);
 		}
+		elseif (!is_numeric($value))
+		{
+			$value = "'$value'";
+		}
 		$parent_key = '`'.addslashes($parent_key).'`';
 		return $this->getExpression($parent_key, $value);
 	}

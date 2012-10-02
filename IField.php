@@ -63,4 +63,8 @@ interface IField
 	public function getCommentary();
 
 	public function setCommentary($commentary);
+
+	public function getLength();
+
+	public function setLength($length);
 }

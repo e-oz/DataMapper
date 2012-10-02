@@ -14,6 +14,7 @@ class Field implements IField
 	private $indexed = false;
 	private $RandomKeyGenerator_field = 'RandomKeyGenerator';
 	private $commentary;
+	private $length;
 
 	public function __construct($name)
 	{
@@ -117,7 +118,7 @@ class Field implements IField
 	{
 		if (empty($this->RandomKeyGenerator))
 		{
-			$this->RandomKeyGenerator = new RandomKeyGenerator();
+			$this->setRandomKeyGenerator(new RandomKeyGenerator());
 		}
 		return $this->RandomKeyGenerator;
 	}
@@ -125,6 +126,10 @@ class Field implements IField
 	public function setRandomKeyGenerator(\Jamm\DataMapper\IRandomKeyGenerator $RandomKeyGenerator)
 	{
 		$this->RandomKeyGenerator = $RandomKeyGenerator;
+		if (!empty($this->length))
+		{
+			$this->RandomKeyGenerator->setKeyLength($this->length);
+		}
 	}
 
 	public function isIndexed()
@@ -173,5 +178,19 @@ class Field implements IField
 	public function setCommentary($commentary)
 	{
 		$this->commentary = $commentary;
+	}
+
+	public function getLength()
+	{
+		return $this->length;
+	}
+
+	public function setLength($length)
+	{
+		$this->length = $length;
+		if (!empty($this->RandomKeyGenerator))
+		{
+			$this->RandomKeyGenerator->setKeyLength($this->length);
+		}
 	}
 }

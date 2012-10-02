@@ -52,4 +52,6 @@ interface IMetaTable
 	public function getCommentary();
 
 	public function setCommentary($commentary);
+
+	public function getInfoRows();
 }

@@ -10,6 +10,12 @@ class MetaTable implements IMetaTable
 	private $writable_fields;
 	private $indexed_fields;
 	private $commentary;
+	/** @var \Jamm\Memory\IMemoryStorage */
+	private $CacheObject;
+	private $cache_key_columns = 'columns';
+	private $cache_key_info = 'info';
+	private $cache_ttl = 604800; //7 days
+	private $info_rows;
 
 	public function __construct($table_name = '')
 	{
@@ -159,7 +165,8 @@ class MetaTable implements IMetaTable
 
 	public function mapFromDB(\PDO $PDO_connection)
 	{
-		$table_info = $this->fetchTableInfoFromDB($PDO_connection);
+		$table_info      = $this->fetchTableInfoFromDB($PDO_connection);
+		$this->info_rows = $table_info;
 		if (!empty($table_info['Comment']))
 		{
 			$this->setCommentary($table_info['Comment']);
@@ -171,6 +178,10 @@ class MetaTable implements IMetaTable
 			if (empty($name)) continue;
 			$Field = $this->getNewFieldObject($name);
 			$Field->setType($column['Type']);
+			if (($length = $this->getLengthFromTypeDefinition($column['Type'])) > 0)
+			{
+				$Field->setLength($length);
+			}
 			if ($column['Key']==='PRI') $Field->setPrimaryIndex(true);
 			if ($column['Key']==='UNI') $Field->setUnique(true);
 			if ($column['Extra']==='auto_increment') $Field->setAutoincrement(true);
@@ -181,29 +192,95 @@ class MetaTable implements IMetaTable
 		return true;
 	}
 
-	protected function fetchTableColumnsInfoFromDB(\PDO $PDO_connection)
+	protected function getLengthFromTypeDefinition($type)
 	{
-		$query = $PDO_connection->query("SHOW FULL COLUMNS FROM `{$this->name}`");
-		if (!$query)
+		$bracket_start = strpos($type, '(');
+		if ($bracket_start===false)
 		{
-			trigger_error(implode(' ', $PDO_connection->errorInfo()), E_USER_WARNING);
 			return false;
 		}
-		return $query->fetchAll(\PDO::FETCH_ASSOC);
+		$bracket_end = strpos($type, ')');
+		if (!$bracket_end)
+		{
+			$bracket_end = strlen($type);
+		}
+		$length = substr($type, $bracket_start+1, $bracket_end-$bracket_start-1);
+		if (($comma = strpos($length, ','))!==false)
+		{
+			$length = substr($length, 0, $comma);
+		}
+		return intval($length);
+	}
+
+	protected function fetchTableColumnsInfoFromDB(\PDO $PDO_connection)
+	{
+		$columns = $this->getColumnsFromCache();
+		if (empty($columns))
+		{
+			$query = $PDO_connection->query("SHOW FULL COLUMNS FROM `{$this->name}`");
+			if (!$query)
+			{
+				trigger_error(implode(' ', $PDO_connection->errorInfo()), E_USER_WARNING);
+				return false;
+			}
+			$columns = $query->fetchAll(\PDO::FETCH_ASSOC);
+			$this->setColumnsInCache($columns);
+		}
+		return $columns;
+	}
+
+	protected function getColumnsFromCache()
+	{
+		if (empty($this->CacheObject))
+		{
+			return false;
+		}
+		return $this->CacheObject->read($this->cache_key_columns.':'.$this->name);
+	}
+
+	protected function setColumnsInCache($columns)
+	{
+		if (empty($this->CacheObject))
+		{
+			return false;
+		}
+		return $this->CacheObject->save($this->cache_key_columns.':'.$this->name, $columns, $this->cache_ttl);
 	}
 
 	protected function fetchTableInfoFromDB(\PDO $PDO_connection)
 	{
-		$sql   = "SHOW TABLE STATUS WHERE Name='".$this->name."'";
-		$query = $PDO_connection->query($sql);
-		if (!$query)
+		$info = $this->getTableInfoFromCache();
+		if (empty($info))
 		{
-			trigger_error($sql.'; '.implode(' ', $PDO_connection->errorInfo()), E_USER_WARNING);
+			$sql   = "SHOW TABLE STATUS WHERE Name='".$this->name."'";
+			$query = $PDO_connection->query($sql);
+			if (!$query)
+			{
+				trigger_error($sql.'; '.implode(' ', $PDO_connection->errorInfo()), E_USER_WARNING);
+				return false;
+			}
+			$info = $query->fetch(\PDO::FETCH_ASSOC);
+			$this->setTableInfoInCache($info);
+		}
+		return $info;
+	}
+
+	protected function getTableInfoFromCache()
+	{
+		if (empty($this->CacheObject))
+		{
 			return false;
 		}
-		$result = $query->fetch(\PDO::FETCH_ASSOC);
-		$query->closeCursor();
-		return $result;
+		return $this->CacheObject->read($this->cache_key_info.':'.$this->name);
+	}
+
+	protected function setTableInfoInCache($info)
+	{
+		if (empty($this->CacheObject))
+		{
+			return false;
+		}
+		return $this->CacheObject->save($this->cache_key_info.':'.$this->name, $info, $this->cache_ttl);
 	}
 
 	public function removeFieldByName($name)
@@ -221,5 +298,20 @@ class MetaTable implements IMetaTable
 	public function setCommentary($commentary)
 	{
 		$this->commentary = $commentary;
+	}
+
+	public function setCacheObject(\Jamm\Memory\IMemoryStorage $CacheObject)
+	{
+		$this->CacheObject = $CacheObject;
+	}
+
+	public function setCacheTtl($cache_ttl)
+	{
+		$this->cache_ttl = $cache_ttl;
+	}
+
+	public function getInfoRows()
+	{
+		return $this->info_rows;
 	}
 }
