@@ -1,0 +1,32 @@
+{
+	"name": "jamm/datamapper",
+	"require": {
+		"php": ">=5.4.0",
+		"suggest": {
+			"jamm/memory": "allows to use Redis gateway",
+			"jamm/tester": "run unit-tests"
+		}
+	},
+	"description": "Map objects to storage (MySQL or Redis), without relations mapping",
+	"version": "0.6.3",
+	"type": "library",
+	"keywords": ["datamapper"],
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Eugene OZ",
+			"email": "normandiggs@gmail.com",
+			"homepage": "https://github.com/jamm/",
+			"role": "Developer"
+		}
+	],
+	"support": {
+		"email": "normandiggs@gmail.com",
+		"source": "https://github.com/jamm/Autoload"
+	},
+	"autoload": {
+		"psr-0": {
+			"Jamm\\DataMapper": ""
+		}
+	}
+}

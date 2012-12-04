@@ -8,7 +8,7 @@ class EntityCodeGenerator
 
 	public function getEntityClassCode(IMetaTable $Table, $namespace = '', $parent_class_name = '')
 	{
-		$fields = $Table->getFields();
+		$fields = $this->getFieldsFromMetaTable($Table);
 		if (empty($fields))
 		{
 			trigger_error('Set fields first', E_USER_WARNING);
@@ -34,6 +34,27 @@ class EntityCodeGenerator
 		}
 		$code .= $this->getClassEnding();
 		return $code;
+	}
+
+	/**
+	 * @param IMetaTable $Table
+	 * @return IField[]
+	 */
+	private function getFieldsFromMetaTable(IMetaTable $Table)
+	{
+		$fields = $Table->getFields();
+		foreach ($fields as $i => $Field)
+		{
+			$name = $Field->getName();
+			if (!ctype_alpha($name[0]))
+			{
+				$name       = '_'.$name;
+				$CloneField = clone $Field;
+				$CloneField->setName($name);
+				$fields[$i] = $CloneField;
+			}
+		}
+		return $fields;
 	}
 
 	/**
