@@ -9,8 +9,17 @@
 	},
 	"description": "Map objects to storage (MySQL or Redis), without relations mapping",
 	"version": "0.6.3",
-	"type": "library",
 	"keywords": ["datamapper"],
+	"support": {
+		"email": "normandiggs@gmail.com",
+		"source": "https://github.com/jamm/DataMapper"
+	},
+	"autoload": {
+		"psr-0": {
+			"Jamm\\DataMapper": ""
+		}
+	},
+	"type": "library",
 	"license": "MIT",
 	"authors": [
 		{
@@ -19,14 +28,5 @@
 			"homepage": "https://github.com/jamm/",
 			"role": "Developer"
 		}
-	],
-	"support": {
-		"email": "normandiggs@gmail.com",
-		"source": "https://github.com/jamm/Autoload"
-	},
-	"autoload": {
-		"psr-0": {
-			"Jamm\\DataMapper": ""
-		}
-	}
+	]
 }
