@@ -1,11 +1,11 @@
 {
 	"name": "jamm/datamapper",
 	"require": {
-		"php": ">=5.4.0",
-		"suggest": {
-			"jamm/memory": "allows to use Redis gateway",
-			"jamm/tester": "run unit-tests"
-		}
+		"php": ">=5.4.0"
+	},
+	"suggest": {
+		"jamm/memory": "allows to use Redis gateway",
+		"jamm/tester": "run unit-tests"
 	},
 	"description": "Map objects to storage (MySQL or Redis), without relations mapping",
 	"version": "0.6.3",
